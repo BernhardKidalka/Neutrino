@@ -5,7 +5,7 @@ project(Neutrino
 	LANGUAGES CXX)
 
 # ==============================================================================
-# Build-Konfiguration
+# Build Configuration
 # ==============================================================================
 
 # C++ Standard
@@ -13,19 +13,19 @@ set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_CXX_EXTENSIONS OFF)
 
-# Build Verzeichnisse
+# Build Directories
 set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/lib)
 set(CMAKE_LIBRARY_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/lib)
 set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/bin)
 
 # ==============================================================================
-# Compiler-spezifische Einstellungen
+# Compiler-specific Settings
 # ==============================================================================
 
 if(MSVC)
 	# Visual Studio Compiler
-	add_compile_options(/W4)  # Warnstufe 4
-	add_compile_options(/permissive-)  # Strikte Konformität
+	add_compile_options(/W4)  # Warning level 4
+	add_compile_options(/permissive-)  # Strict Conformance
 else()
 	# GCC/Clang (Linux, etc.)
 	add_compile_options(-Wall -Wextra -Wpedantic)
@@ -35,25 +35,25 @@ else()
 endif()
 
 # ==============================================================================
-# Plattform-spezifische Einstellungen
+# Platform-specific Settings
 # ==============================================================================
 
 if(WIN32)
-	message(STATUS "Konfiguriere für Windows")
+	message(STATUS "Configure for Windows")
 	add_compile_definitions(_CRT_SECURE_NO_WARNINGS)
 elseif(UNIX AND NOT APPLE)
-	message(STATUS "Konfiguriere für Linux")
+	message(STATUS "Configure for Linux")
 	set(LINUX TRUE)
 elseif(APPLE)
-	message(STATUS "Konfiguriere für macOS")
+	message(STATUS "Configure for macOS")
 endif()
 
 # ==============================================================================
-# Abhängigkeiten
+# Dependencies
 # ==============================================================================
 
-# Hier können Sie externe Bibliotheken hinzufügen (z.B. mit find_package)
-# Beispiel:
+# Here you can add external libraries (e.g., with find_package)
+# Example:
 # find_package(OpenGL REQUIRED)
 
 # ==============================================================================
@@ -68,7 +68,7 @@ add_subdirectory(src)
 # ==============================================================================
 
 message(STATUS "")
-message(STATUS "Neutrino Konfiguration:")
+message(STATUS "Neutrino Configuration:")
 message(STATUS "  Platform: ${CMAKE_SYSTEM_NAME}")
 message(STATUS "  Compiler: ${CMAKE_CXX_COMPILER_ID} ${CMAKE_CXX_COMPILER_VERSION}")
 message(STATUS "  C++ Standard: ${CMAKE_CXX_STANDARD}")

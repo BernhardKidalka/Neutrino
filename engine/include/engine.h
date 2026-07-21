@@ -1,5 +1,4 @@
-#ifndef NEUTRINO_ENGINE_H
-#define NEUTRINO_ENGINE_H
+#pragma once
 
 namespace Neutrino 
 {
@@ -19,5 +18,3 @@ namespace Neutrino
     };
 
 } // namespace Neutrino
-
-#endif // NEUTRINO_ENGINE_H
