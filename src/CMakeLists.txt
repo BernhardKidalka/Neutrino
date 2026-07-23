@@ -24,16 +24,6 @@ target_include_directories(Neutrino
 # C++ Standard
 target_compile_features(Neutrino PRIVATE cxx_std_20)
 
-# Compiler-specific options (only for our executable, not third-party)
-if(MSVC)
-	target_compile_options(Neutrino PRIVATE /W4 /permissive-)
-else()
-	target_compile_options(Neutrino PRIVATE -Wall -Wextra -Wpedantic)
-	if(CMAKE_CXX_COMPILER_ID STREQUAL "Clang")
-		target_compile_options(Neutrino PRIVATE -Wthread-safety)
-	endif()
-endif()
-
 # Platform-specific properties
 if(WIN32)
 	# Windows console application
