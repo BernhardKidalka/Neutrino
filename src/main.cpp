@@ -20,18 +20,9 @@ int main([[maybe_unused]] int argc, [[maybe_unused]] char* argv[])
 
         std::cout << "Engine successfully initialized.\n";
         std::cout << "Application is running ...\n";
-        std::cout << "Close the window to exit.\n\n";
 
-        // main application loop ...
-        while (engine.ProcessEvents())
-        {
-            // TODO: rendering loop
-            // - clear screen
-            // - submit Vulkan commands
-            // - present frame
-        }
+        // main loop here ...
 
-        std::cout << "\nWindow closed by user.\n";
         engine.Shutdown();
         std::cout << "Engine was shut down.\n";
 
