@@ -4,6 +4,21 @@
 
 **Neutrino** is a Real-Time Rendering and Compute Engine based on **Vulkan** and **C++**.
 
+## Prerequisites
+
+- **CMake** >= 3.20
+- **C++20** compatible compiler (MSVC, GCC, Clang)
+- **Vulkan SDK** installed and available on system
+- **Git** (for submodule support)
+
+## Clone Repository with Submodules
+
+```bash
+git clone https://github.com/BernhardKidalka/Neutrino.git
+cd Neutrino
+git submodule update --init --recursive
+```
+
 ## Building Neutrino
 
 ### Windows (example for Visual Studio 2022)
@@ -27,3 +42,24 @@ cmake -B build -DCMAKE_BUILD_TYPE=Release
 cmake --build build
 ```
 
+## Project Structure
+
+```
+Neutrino/
+├── CMakeLists.txt              # Main CMake configuration
+├── third_party/
+│   └── glfw/                   # GLFW (window abstraction) - Git submodule
+├── engine/
+│   ├── CMakeLists.txt          # Engine library configuration
+│   ├── engine.cpp
+│   └── include/
+│       └── engine.h
+└── src/
+    ├── CMakeLists.txt          # Executable configuration
+    └── main.cpp
+```
+
+## Dependencies
+
+- **Vulkan SDK** - Graphics API
+- **GLFW** (submodule) - Window and input abstraction

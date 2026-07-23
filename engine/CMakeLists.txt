@@ -32,9 +32,20 @@ target_include_directories(NeutrinoEngine
 # C++ Standard
 target_compile_features(NeutrinoEngine PRIVATE cxx_std_20)
 
+# Compiler-specific options (only for our library, not third-party)
+if(MSVC)
+	target_compile_options(NeutrinoEngine PRIVATE /W4 /permissive-)
+else()
+	target_compile_options(NeutrinoEngine PRIVATE -Wall -Wextra -Wpedantic)
+	if(CMAKE_CXX_COMPILER_ID STREQUAL "Clang")
+		target_compile_options(NeutrinoEngine PRIVATE -Wthread-safety)
+	endif()
+endif()
+
 # Link Vulkan library
 target_link_libraries(NeutrinoEngine
 	PRIVATE Vulkan::Vulkan
+	PRIVATE glfw
 )
 
 # Vulkan RAII (C++) specific compiler definitions

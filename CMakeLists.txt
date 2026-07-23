@@ -22,17 +22,8 @@ set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/bin)
 # Compiler-specific Settings
 # ==============================================================================
 
-if(MSVC)
-	# Visual Studio Compiler
-	add_compile_options(/W4)  # Warning level 4
-	add_compile_options(/permissive-)  # Strict Conformance
-else()
-	# GCC/Clang (Linux, etc.)
-	add_compile_options(-Wall -Wextra -Wpedantic)
-	if(CMAKE_CXX_COMPILER_ID STREQUAL "Clang")
-		add_compile_options(-Wthread-safety)
-	endif()
-endif()
+# Note: Compiler options are applied to targets individually to avoid conflicts
+# with third-party libraries. This prevents D9025 warnings.
 
 # ==============================================================================
 # Platform-specific Settings
@@ -52,9 +43,12 @@ endif()
 # Dependencies
 # ==============================================================================
 
-# Here you can add external libraries (e.g., with find_package)
-# Example:
-# find_package(OpenGL REQUIRED)
+# GLFW Configuration
+set(GLFW_BUILD_DOCS OFF CACHE BOOL "" FORCE)
+set(GLFW_BUILD_TESTS OFF CACHE BOOL "" FORCE)
+set(GLFW_BUILD_EXAMPLES OFF CACHE BOOL "" FORCE)
+
+add_subdirectory(third_party/glfw)
 
 # ==============================================================================
 # Subdirectories
