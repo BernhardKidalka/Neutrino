@@ -21,7 +21,11 @@ int main([[maybe_unused]] int argc, [[maybe_unused]] char* argv[])
         std::cout << "Engine successfully initialized.\n";
         std::cout << "Application is running ...\n";
 
-        // main loop here ...
+        // main loop
+        while (engine.IsWindowOpen())
+        {
+            engine.PollEvents();
+        }
 
         engine.Shutdown();
         std::cout << "Engine was shut down.\n";
