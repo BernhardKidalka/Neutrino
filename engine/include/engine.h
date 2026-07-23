@@ -9,9 +9,9 @@ namespace Neutrino
         Engine();
         ~Engine();
 
-        bool initialize();
-        void shutdown();
-        bool isInitialized() const;
+        bool Initialize();
+        void Shutdown();
+        bool IsInitialized() const;
 
     private:
         bool initialized_;

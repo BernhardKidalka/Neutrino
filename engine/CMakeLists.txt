@@ -1,6 +1,18 @@
 cmake_minimum_required(VERSION 3.20)
 
 # ==============================================================================
+# Find Vulkan SDK
+# ==============================================================================
+
+find_package(Vulkan REQUIRED)
+
+if(NOT Vulkan_FOUND)
+	message(FATAL_ERROR "Vulkan SDK not found. Please install the Vulkan SDK and set VULKAN_SDK environment variable.")
+endif()
+
+message(STATUS "Vulkan SDK found: ${Vulkan_INCLUDE_DIR}")
+
+# ==============================================================================
 # NeutrinoEngine Shared Library
 # ==============================================================================
 
@@ -12,12 +24,25 @@ add_library(NeutrinoEngine SHARED
 target_include_directories(NeutrinoEngine
 	PUBLIC
 		${CMAKE_CURRENT_SOURCE_DIR}/include
+		${Vulkan_INCLUDE_DIR}
 	PRIVATE
 		${CMAKE_CURRENT_SOURCE_DIR}
 )
 
 # C++ Standard
 target_compile_features(NeutrinoEngine PRIVATE cxx_std_20)
+
+# Link Vulkan library
+target_link_libraries(NeutrinoEngine
+	PRIVATE Vulkan::Vulkan
+)
+
+# Vulkan RAII (C++) specific compiler definitions
+target_compile_definitions(NeutrinoEngine
+	PRIVATE
+		VULKAN_HPP_NO_CONSTRUCTORS
+		VULKAN_HPP_DISPATCH_LOADER_DYNAMIC=1
+)
 
 # Platform-specific properties
 if(WIN32)

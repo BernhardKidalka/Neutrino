@@ -12,7 +12,7 @@ int main([[maybe_unused]] int argc, [[maybe_unused]] char* argv[])
         // create and initialize the engine ...
         Neutrino::Engine engine;
 
-        if (!engine.initialize()) 
+        if (!engine.Initialize()) 
         {
             std::cerr << "Error: Unable to initialize engine.\n";
             return 1;
@@ -23,7 +23,7 @@ int main([[maybe_unused]] int argc, [[maybe_unused]] char* argv[])
 
         // main loop here ...
 
-        engine.shutdown();
+        engine.Shutdown();
         std::cout << "Engine was shut down.\n";
 
         return 0;

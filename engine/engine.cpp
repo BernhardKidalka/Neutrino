@@ -9,10 +9,10 @@ namespace Neutrino
 
     Engine::~Engine() 
     {
-        shutdown();
+        Shutdown();
     }
 
-    bool Engine::initialize() 
+    bool Engine::Initialize() 
     {
         if (initialized_) 
         {
@@ -25,7 +25,7 @@ namespace Neutrino
         return true;
     }
 
-    void Engine::shutdown() 
+    void Engine::Shutdown() 
     {
         if (!initialized_) 
         {
@@ -37,7 +37,7 @@ namespace Neutrino
         initialized_ = false;
     }
 
-    bool Engine::isInitialized() const 
+    bool Engine::IsInitialized() const 
     {
         return initialized_;
     }
