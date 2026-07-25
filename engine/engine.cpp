@@ -1,3 +1,18 @@
+//------------------------------------------------------------------------------------------------------
+// Copyright(C) Bernhard Kidalka     (2026) 
+//------------------------------------------------------------------------------------------------------
+//
+// Project: Neutrino Engine
+//    File: Neutrino\engine\engine.cpp
+//  Author: B. Kidalka
+//    Date: 2026-07-25
+//
+//    Lang: C++
+//
+// Descrip: Neutrino Engine implementation.
+//
+//------------------------------------------------------------------------------------------------------
+
 #include "engine.h"
 #include <iostream>
 #include <string_view>
@@ -7,8 +22,10 @@ VULKAN_HPP_DEFAULT_DISPATCH_LOADER_DYNAMIC_STORAGE
 
 namespace Neutrino 
 {
-    Engine::Engine() 
-        : initialized_(false), window_(nullptr), physical_device_(nullptr)
+    Engine::Engine() : 
+        initialized_(false), 
+        window_(nullptr), 
+        physicalDevice_(nullptr)
     {
     }
 
@@ -23,16 +40,16 @@ namespace Neutrino
             return true;
         }
 
-        if (!InitializeWindow())
+        if (!initializeWindow())
         {
             std::cerr << "Failed to initialize window\n";
             return false;
         }
 
-        if (!InitializeVulkan())
+        if (!initializeVulkan())
         {
             std::cerr << "Failed to initialize Vulkan\n";
-            ShutdownWindow();
+            shutdownWindow();
             return false;
         }
 
@@ -47,8 +64,8 @@ namespace Neutrino
             return;
         }
 
-        ShutdownVulkan();
-        ShutdownWindow();
+        shutdownVulkan();
+        shutdownWindow();
 
         initialized_ = false;
     }
@@ -71,7 +88,7 @@ namespace Neutrino
         }
     }
 
-    bool Engine::InitializeWindow()
+    bool Engine::initializeWindow()
     {
         if (!glfwInit())
         {
@@ -100,39 +117,39 @@ namespace Neutrino
         return true;
     }
 
-    bool Engine::InitializeVulkan()
+    bool Engine::initializeVulkan()
     {
         try
         {
-            if (!CreateInstance())
+            if (!createInstance())
             {
                 std::cerr << "Failed to create Vulkan instance\n";
                 return false;
             }
 
-            // Initialize function pointers for instance
-            VULKAN_HPP_DEFAULT_DISPATCHER.init(vulkan_instance_.get());
+            // initialize function pointers for instance
+            VULKAN_HPP_DEFAULT_DISPATCHER.init(vulkanInstance_.get());
 
-            if (!CreateSurface())
+            if (!createSurface())
             {
                 std::cerr << "Failed to create Vulkan surface\n";
                 return false;
             }
 
-            if (!SelectPhysicalDevice())
+            if (!selectPhysicalDevice())
             {
-                std::cerr << "Failed to select physical device\n";
+                std::cerr << "Failed to select physical device (GPU)\n";
                 return false;
             }
 
-            if (!CreateLogicalDevice())
+            if (!createLogicalDevice())
             {
                 std::cerr << "Failed to create logical device\n";
                 return false;
             }
 
-            // Initialize function pointers for device (keeps instance dispatcher intact)
-            VULKAN_HPP_DEFAULT_DISPATCHER.init(logical_device_.get());
+            // initialize function pointers for device (keeps instance dispatcher intact)
+            VULKAN_HPP_DEFAULT_DISPATCHER.init(logicalDevice_.get());
 
             return true;
         }
@@ -148,68 +165,71 @@ namespace Neutrino
         }
     }
 
-    bool Engine::CreateInstance()
+    bool Engine::createInstance()
     {
-        // Initialize the dynamic dispatcher with global-level functions
+        // initialize the dynamic dispatcher with global-level functions
         VULKAN_HPP_DEFAULT_DISPATCHER.init(vkGetInstanceProcAddr);
 
-        // Get required extensions from GLFW
-        uint32_t glfw_extension_count = 0;
-        const char** glfw_extensions = glfwGetRequiredInstanceExtensions(&glfw_extension_count);
+        // get required extensions from GLFW ...
+        uint32_t glfwExtensionCount = 0;
+        const char** glfwExtensions = glfwGetRequiredInstanceExtensions(&glfwExtensionCount);
 
-        std::vector<const char*> extensions(glfw_extensions, glfw_extensions + glfw_extension_count);
+        std::vector<const char*> extensions(glfwExtensions, glfwExtensions + glfwExtensionCount);
 
-        vk::ApplicationInfo app_info{
+        vk::ApplicationInfo appInfo
+        {
             .pApplicationName = "Neutrino Engine",
             .applicationVersion = VK_MAKE_VERSION(1, 0, 0),
             .pEngineName = "Neutrino",
-            .engineVersion = VK_MAKE_VERSION(1, 0, 0),
-            .apiVersion = VK_API_VERSION_1_3
+            .engineVersion = VK_MAKE_VERSION(0, 0, 1),
+            .apiVersion = VK_API_VERSION_1_3 // restricted to Vulkan 1.3 to ensure compatibility with MoltenVK (macOS)
         };
 
-        vk::InstanceCreateInfo create_info{
-            .pApplicationInfo = &app_info,
+        vk::InstanceCreateInfo instCreateInfo
+        {
+            .pApplicationInfo = &appInfo,
             .enabledExtensionCount = static_cast<uint32_t>(extensions.size()),
             .ppEnabledExtensionNames = extensions.data()
         };
 
-        vulkan_instance_ = vk::createInstanceUnique(create_info);
+        vulkanInstance_ = vk::createInstanceUnique(instCreateInfo);
+        
         return true;
     }
 
-    bool Engine::CreateSurface()
+    bool Engine::createSurface()
     {
-        VkSurfaceKHR c_surface = nullptr;
-        if (glfwCreateWindowSurface(vulkan_instance_.get(), window_, nullptr, &c_surface) != VK_SUCCESS)
+        VkSurfaceKHR surfaceKHR = nullptr;
+        if (glfwCreateWindowSurface(vulkanInstance_.get(), window_, nullptr, &surfaceKHR) != VK_SUCCESS)
         {
             std::cerr << "Failed to create window surface\n";
             return false;
         }
 
-        // Store the raw surface handle (will be manually destroyed)
-        surface_ = vk::SurfaceKHR(c_surface);
+        // store the raw surface handle (will be manually destroyed)
+        surface_ = vk::SurfaceKHR(surfaceKHR);
 
         return true;
     }
 
-    QueueFamilyIndices Engine::FindQueueFamilies(vk::PhysicalDevice device) const
+    QueueFamilyIndices Engine::findQueueFamilies(vk::PhysicalDevice device) const
     {
         QueueFamilyIndices indices;
 
-        auto queue_families = device.getQueueFamilyProperties();
+        auto queueFamilies = device.getQueueFamilyProperties();
 
         int i = 0;
-        for (const auto& queue_family : queue_families)
+        for (const auto& queueFamily : queueFamilies)
         {
-            if (queue_family.queueFlags & vk::QueueFlagBits::eGraphics)
+            if (queueFamily.queueFlags & vk::QueueFlagBits::eGraphics)
             {
-                indices.graphics_family = i;
+                indices.graphicsFamily = i;
             }
 
             if (device.getSurfaceSupportKHR(i, surface_))
             {
-                // For now, we use the same queue family for graphics and presentation
-                if (indices.graphics_family.has_value())
+                // for now, we use the same queue family for graphics and presentation
+                if (indices.graphicsFamily.has_value())
                 {
                     break;
                 }
@@ -221,28 +241,28 @@ namespace Neutrino
         return indices;
     }
 
-    bool Engine::IsDeviceSuitable(vk::PhysicalDevice device) const
+    bool Engine::isDeviceSuitable(vk::PhysicalDevice device) const
     {
-        auto indices = FindQueueFamilies(device);
+        auto indices = findQueueFamilies(device);
 
         auto extensions = device.enumerateDeviceExtensionProperties();
-        bool extensions_supported = false;
+        bool extensionsSupported = false;
 
         for (const auto& ext : extensions)
         {
             if (std::string_view(ext.extensionName) == VK_KHR_SWAPCHAIN_EXTENSION_NAME)
             {
-                extensions_supported = true;
+                extensionsSupported = true;
                 break;
             }
         }
 
-        return indices.IsComplete() && extensions_supported;
+        return indices.IsComplete() && extensionsSupported;
     }
 
-    bool Engine::SelectPhysicalDevice()
+    bool Engine::selectPhysicalDevice()
     {
-        auto devices = vulkan_instance_->enumeratePhysicalDevices();
+        auto devices = vulkanInstance_->enumeratePhysicalDevices();
 
         if (devices.empty())
         {
@@ -251,7 +271,7 @@ namespace Neutrino
         }
 
         auto it = std::find_if(devices.begin(), devices.end(),
-            [this](vk::PhysicalDevice device) { return IsDeviceSuitable(device); });
+            [this](vk::PhysicalDevice device) { return isDeviceSuitable(device); });
 
         if (it == devices.end())
         {
@@ -259,17 +279,17 @@ namespace Neutrino
             return false;
         }
 
-        physical_device_ = *it;
+        physicalDevice_ = *it;
 
-        auto properties = physical_device_.getProperties();
+        auto properties = physicalDevice_.getProperties();
         std::cout << "Selected GPU: " << properties.deviceName << "\n";
 
         return true;
     }
 
-    bool Engine::CreateLogicalDevice()
+    bool Engine::createLogicalDevice()
     {
-        auto indices = FindQueueFamilies(physical_device_);
+        auto indices = findQueueFamilies(physicalDevice_);
 
         if (!indices.IsComplete())
         {
@@ -277,57 +297,60 @@ namespace Neutrino
             return false;
         }
 
-        float queue_priority = 1.0f;
-        vk::DeviceQueueCreateInfo queue_create_info{
-            .queueFamilyIndex = indices.graphics_family.value(),
+        float queuePriority = 1.0f;
+        vk::DeviceQueueCreateInfo queueCreateInfo
+        {
+            .queueFamilyIndex = indices.graphicsFamily.value(),
             .queueCount = 1,
-            .pQueuePriorities = &queue_priority
+            .pQueuePriorities = &queuePriority
         };
 
-        const std::vector<const char*> device_extensions = {
+        const std::vector<const char*> deviceExtensions = 
+        {
             VK_KHR_SWAPCHAIN_EXTENSION_NAME
         };
 
         vk::PhysicalDeviceFeatures device_features{};
 
-        vk::DeviceCreateInfo create_info{
+        vk::DeviceCreateInfo deviceCreateInfo
+        {
             .queueCreateInfoCount = 1,
-            .pQueueCreateInfos = &queue_create_info,
-            .enabledExtensionCount = static_cast<uint32_t>(device_extensions.size()),
-            .ppEnabledExtensionNames = device_extensions.data(),
+            .pQueueCreateInfos = &queueCreateInfo,
+            .enabledExtensionCount = static_cast<uint32_t>(deviceExtensions.size()),
+            .ppEnabledExtensionNames = deviceExtensions.data(),
             .pEnabledFeatures = &device_features
         };
 
-        logical_device_ = physical_device_.createDeviceUnique(create_info);
+        logicalDevice_ = physicalDevice_.createDeviceUnique(deviceCreateInfo);
 
-        graphics_queue_ = logical_device_->getQueue(indices.graphics_family.value(), 0);
+        graphicsQueue_ = logicalDevice_->getQueue(indices.graphicsFamily.value(), 0);
 
         return true;
     }
 
-    void Engine::ShutdownVulkan()
+    void Engine::shutdownVulkan()
     {
-        if (logical_device_)
+        if (logicalDevice_)
         {
-            logical_device_->waitIdle();
-            logical_device_.reset();
+            logicalDevice_->waitIdle();
+            logicalDevice_.reset();
         }
 
-        physical_device_ = nullptr;
+        physicalDevice_ = nullptr;
 
         // manually destroy surface before instance is destroyed ...
         if (surface_)
         {
             // need to use instance dispatcher to destroy surface
-            VULKAN_HPP_DEFAULT_DISPATCHER.init(vulkan_instance_.get());
-            vulkan_instance_->destroySurfaceKHR(surface_);
+            VULKAN_HPP_DEFAULT_DISPATCHER.init(vulkanInstance_.get());
+            vulkanInstance_->destroySurfaceKHR(surface_);
             surface_ = nullptr;
         }
 
         // vulkan_instance_ is destroyed automatically at end of scope
     }
 
-    void Engine::ShutdownWindow()
+    void Engine::shutdownWindow()
     {
         if (window_ != nullptr)
         {

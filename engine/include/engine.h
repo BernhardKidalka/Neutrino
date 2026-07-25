@@ -1,20 +1,32 @@
+//------------------------------------------------------------------------------------------------------
+// Copyright(C) Bernhard Kidalka     (2026) 
+//------------------------------------------------------------------------------------------------------
+//
+// Project: Neutrino Engine
+//    File: Neutrino\engine\include\engine.h
+//  Author: B. Kidalka
+//    Date: 2026-07-25
+//
+//    Lang: C++
+//
+// Descrip: Neutrino Engine declarations.
+//
+//------------------------------------------------------------------------------------------------------
 #pragma once
 
-#include <vulkan/vulkan.hpp>
+#include <vulkan/vulkan_raii.hpp>
 #include <GLFW/glfw3.h>
-#include <memory>
 #include <optional>
-#include <vector>
 
 namespace Neutrino 
 {
     struct QueueFamilyIndices
     {
-        std::optional<uint32_t> graphics_family;
+        std::optional<uint32_t> graphicsFamily;
 
         bool IsComplete() const
         {
-            return graphics_family.has_value();
+            return graphicsFamily.has_value();
         }
     };
 
@@ -30,35 +42,36 @@ namespace Neutrino
         bool IsWindowOpen() const;
         void PollEvents();
 
-        static constexpr int WINDOW_WIDTH = 800;
-        static constexpr int WINDOW_HEIGHT = 600;
+        static constexpr int WINDOW_WIDTH = 1024;
+        static constexpr int WINDOW_HEIGHT = 768;
 
     private:
-        // initialization methods ...
-        bool InitializeWindow();
-        bool InitializeVulkan();
-        void ShutdownWindow();
-        void ShutdownVulkan();
+        // initialization & shutdown methods ...
+        bool initializeWindow();
+        bool initializeVulkan();
+        void shutdownWindow();
+        void shutdownVulkan();
 
         // Vulkan helper methods ...
-        bool CreateInstance();
-        bool SelectPhysicalDevice();
-        bool CreateLogicalDevice();
-        bool CreateSurface();
-        QueueFamilyIndices FindQueueFamilies(vk::PhysicalDevice device) const;
-        bool IsDeviceSuitable(vk::PhysicalDevice device) const;
+        bool createInstance();
+        bool selectPhysicalDevice();
+        bool createLogicalDevice();
+        bool createSurface();
+        QueueFamilyIndices findQueueFamilies(vk::PhysicalDevice device) const;
+        bool isDeviceSuitable(vk::PhysicalDevice device) const;
 
         // state
         bool initialized_;
         
+        // platform-specific window handle (GLFW)
         GLFWwindow* window_;
 
         // Vulkan objects (using RAII wrappers)
-        vk::UniqueInstance vulkan_instance_;
-        vk::PhysicalDevice physical_device_;
-        vk::UniqueDevice logical_device_;
-        vk::SurfaceKHR surface_; // manually managed to avoid dispatcher conflicts
-        vk::Queue graphics_queue_;
+        vk::UniqueInstance  vulkanInstance_;
+        vk::PhysicalDevice  physicalDevice_;
+        vk::UniqueDevice    logicalDevice_;
+        vk::SurfaceKHR      surface_; // manually managed to avoid dispatcher conflicts
+        vk::Queue           graphicsQueue_;
     };
 
 } // namespace Neutrino
