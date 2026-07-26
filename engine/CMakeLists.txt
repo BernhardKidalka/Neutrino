@@ -17,13 +17,15 @@ message(STATUS "Vulkan SDK found: ${Vulkan_INCLUDE_DIR}")
 # ==============================================================================
 
 add_library(NeutrinoEngine SHARED
-	engine.cpp
+	core/engine.cpp
+	core/logger.cpp
 )
 
 # Header files
 target_include_directories(NeutrinoEngine
 	PUBLIC
 		${CMAKE_CURRENT_SOURCE_DIR}/include
+		${CMAKE_CURRENT_SOURCE_DIR}/core
 		${Vulkan_INCLUDE_DIR}
 	PRIVATE
 		${CMAKE_CURRENT_SOURCE_DIR}

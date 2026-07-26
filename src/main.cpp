@@ -18,7 +18,7 @@
 // Project: Neutrino Engine
 //    File: Neutrino\src\main.cpp
 //  Author: B. Kidalka
-//    Date: 2026-07-25
+//    Date: 2026-07-26
 //
 //    Lang: C++
 //
@@ -32,8 +32,9 @@
 //
 //------------------------------------------------------------------------------------------------------
 
-#include <iostream>
 #include "engine.h"
+
+#include <iostream>
 
 int main([[maybe_unused]] int argc, [[maybe_unused]] char* argv[]) 
 {

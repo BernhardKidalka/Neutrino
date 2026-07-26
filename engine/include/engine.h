@@ -18,7 +18,7 @@
 // Project: Neutrino Engine
 //    File: Neutrino\engine\include\engine.h
 //  Author: B. Kidalka
-//    Date: 2026-07-25
+//    Date: 2026-07-26
 //
 //    Lang: C++
 //

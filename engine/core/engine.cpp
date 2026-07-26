@@ -16,9 +16,9 @@
 //------------------------------------------------------------------------------------------------------
 //
 // Project: Neutrino Engine
-//    File: Neutrino\engine\engine.cpp
+//    File: Neutrino\engine\core\engine.cpp
 //  Author: B. Kidalka
-//    Date: 2026-07-25
+//    Date: 2026-07-26
 //
 //    Lang: C++
 //
@@ -27,6 +27,8 @@
 //------------------------------------------------------------------------------------------------------
 
 #include "engine.h"
+#include "core/logger.h"
+
 #include <iostream>
 #include <string_view>
 
@@ -52,16 +54,18 @@ namespace Neutrino
         {
             return true;
         }
+        
+        Logger::Init();
 
         if (!initializeWindow())
         {
-            std::cerr << "Failed to initialize window\n";
+            Logger::Error("Failed to initialize window");
             return false;
         }
 
         if (!initializeVulkan())
         {
-            std::cerr << "Failed to initialize Vulkan\n";
+            Logger::Error("Failed to initialize Vulkan");
             shutdownWindow();
             return false;
         }
@@ -105,7 +109,7 @@ namespace Neutrino
     {
         if (!glfwInit())
         {
-            std::cerr << "Failed to initialize GLFW\n";
+            Logger::Error("Failed to initialize GLFW");
             return false;
         }
 
@@ -122,10 +126,12 @@ namespace Neutrino
 
         if (!window_)
         {
-            std::cerr << "Failed to create GLFW window\n";
+            Logger::Error("Failed to create GLFW window");
             glfwTerminate();
             return false;
         }
+
+        Logger::Info("GLFW window created successfully.");
 
         return true;
     }
@@ -136,7 +142,7 @@ namespace Neutrino
         {
             if (!createInstance())
             {
-                std::cerr << "Failed to create Vulkan instance\n";
+                Logger::Error("Failed to create Vulkan instance");
                 return false;
             }
 
@@ -145,35 +151,37 @@ namespace Neutrino
 
             if (!createSurface())
             {
-                std::cerr << "Failed to create Vulkan surface\n";
+                Logger::Error("Failed to create Vulkan surface");
                 return false;
             }
 
             if (!selectPhysicalDevice())
             {
-                std::cerr << "Failed to select physical device (GPU)\n";
+                Logger::Error("Failed to select physical device (GPU)");
                 return false;
             }
 
             if (!createLogicalDevice())
             {
-                std::cerr << "Failed to create logical device\n";
+                Logger::Error("Failed to create logical device");
                 return false;
             }
 
             // initialize function pointers for device (keeps instance dispatcher intact)
             VULKAN_HPP_DEFAULT_DISPATCHER.init(logicalDevice_.get());
 
+            Logger::Info("Vulkan initialized successfully.");
+
             return true;
         }
         catch (const vk::SystemError& err)
         {
-            std::cerr << "Vulkan error: " << err.what() << "\n";
+            Logger::Error("Vulkan error: " + std::string(err.what()));
             return false;
         }
         catch (const std::exception& err)
         {
-            std::cerr << "Exception: " << err.what() << "\n";
+            Logger::Error("Exception: " + std::string(err.what()));
             return false;
         }
     }
@@ -207,6 +215,8 @@ namespace Neutrino
 
         vulkanInstance_ = vk::createInstanceUnique(instCreateInfo);
         
+        Logger::Info("Vulkan instance created successfully.");
+
         return true;
     }
 
@@ -215,12 +225,14 @@ namespace Neutrino
         VkSurfaceKHR surfaceKHR = nullptr;
         if (glfwCreateWindowSurface(vulkanInstance_.get(), window_, nullptr, &surfaceKHR) != VK_SUCCESS)
         {
-            std::cerr << "Failed to create window surface\n";
+            Logger::Error("Failed to create window surface");
             return false;
         }
 
         // store the raw surface handle (will be manually destroyed)
         surface_ = vk::SurfaceKHR(surfaceKHR);
+
+        Logger::Info("Vulkan surface created successfully.");
 
         return true;
     }
@@ -279,7 +291,7 @@ namespace Neutrino
 
         if (devices.empty())
         {
-            std::cerr << "No physical devices found\n";
+            Logger::Error("No physical devices found");
             return false;
         }
 
@@ -288,14 +300,14 @@ namespace Neutrino
 
         if (it == devices.end())
         {
-            std::cerr << "No suitable physical device found\n";
+            Logger::Error("No suitable physical device found");
             return false;
         }
 
         physicalDevice_ = *it;
 
         auto properties = physicalDevice_.getProperties();
-        std::cout << "Selected GPU: " << properties.deviceName << "\n";
+        Logger::Info("Selected GPU: " + std::string(properties.deviceName.data()));
 
         return true;
     }
@@ -306,7 +318,7 @@ namespace Neutrino
 
         if (!indices.IsComplete())
         {
-            std::cerr << "Queue families not complete\n";
+            Logger::Error("Queue families not complete");
             return false;
         }
 
@@ -338,11 +350,15 @@ namespace Neutrino
 
         graphicsQueue_ = logicalDevice_->getQueue(indices.graphicsFamily.value(), 0);
 
+        Logger::Info("Vulkan logical device created successfully.");
+
         return true;
     }
 
     void Engine::shutdownVulkan()
     {
+        Logger::Info("Shutting down Vulkan...");
+
         if (logicalDevice_)
         {
             logicalDevice_->waitIdle();
@@ -360,16 +376,22 @@ namespace Neutrino
             surface_ = nullptr;
         }
 
+        Logger::Info("Vulkan instance destroyed.");
         // vulkan_instance_ is destroyed automatically at end of scope
     }
 
     void Engine::shutdownWindow()
     {
+        Logger::Info("Shutting down GLFW window...");
+
         if (window_ != nullptr)
         {
             glfwDestroyWindow(window_);
             window_ = nullptr;
         }
+        
+        Logger::Info("GLFW window destroyed.");
+
         glfwTerminate();
     }
 
