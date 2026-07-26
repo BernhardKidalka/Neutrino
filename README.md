@@ -52,9 +52,12 @@ Neutrino/
 │   └── glfw/                   # GLFW (window abstraction) - Git submodule
 ├── engine/
 │   ├── CMakeLists.txt          # Engine library configuration
-│   ├── engine.cpp
-│   └── include/
-│       └── engine.h
+│   ├── include/
+│   │    └── engine.h
+│   └── core/
+│        ├── engine.cpp
+│        ├── logger.h
+│        └── logger.cpp
 └── src/
     ├── CMakeLists.txt          # Executable configuration
     └── main.cpp
