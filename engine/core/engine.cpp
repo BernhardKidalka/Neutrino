@@ -18,7 +18,7 @@
 // Project: Neutrino Engine
 //    File: Neutrino\engine\core\engine.cpp
 //  Author: B. Kidalka
-//    Date: 2026-07-26
+//    Date: 2026-07-31
 //
 //    Lang: C++
 //
@@ -27,7 +27,7 @@
 //------------------------------------------------------------------------------------------------------
 
 #include "engine.h"
-#include "core/logger.h"
+#include "logger.h"
 
 #include <iostream>
 #include <string_view>
@@ -44,8 +44,9 @@ namespace Neutrino
     {
     }
 
-    Engine::~Engine() 
+    Engine::~Engine()
     {
+        Shutdown();
     }
 
     bool Engine::Initialize() 
@@ -73,6 +74,19 @@ namespace Neutrino
         initialized_ = true;
         return true;
     }
+    
+    void Engine::Run()
+    {
+        if (!initialized_)
+        {
+            throw std::runtime_error("Neutrino Engine is not initialized!");
+        }
+
+        while (IsWindowOpen())
+        {
+            glfwPollEvents();
+        }
+    }
 
     void Engine::Shutdown() 
     {
@@ -95,14 +109,6 @@ namespace Neutrino
     bool Engine::IsWindowOpen() const
     {
         return window_ != nullptr && !glfwWindowShouldClose(window_);
-    }
-
-    void Engine::PollEvents()
-    {
-        if (window_ != nullptr)
-        {
-            glfwPollEvents();
-        }
     }
 
     bool Engine::initializeWindow()

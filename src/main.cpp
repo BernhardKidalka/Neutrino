@@ -18,7 +18,7 @@
 // Project: Neutrino Engine
 //    File: Neutrino\src\main.cpp
 //  Author: B. Kidalka
-//    Date: 2026-07-26
+//    Date: 2026-07-31
 //
 //    Lang: C++
 //
@@ -56,11 +56,8 @@ int main([[maybe_unused]] int argc, [[maybe_unused]] char* argv[])
         std::cout << "Engine successfully initialized.\n";
         std::cout << "Application is running ...\n";
 
-        // engine main loop
-        while (engine.IsWindowOpen())
-        {
-            engine.PollEvents();
-        }
+        // enter engine main loop
+        engine.Run();
 
         // shutdown the engine ...
         engine.Shutdown();

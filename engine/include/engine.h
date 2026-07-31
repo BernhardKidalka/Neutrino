@@ -18,7 +18,7 @@
 // Project: Neutrino Engine
 //    File: Neutrino\engine\include\engine.h
 //  Author: B. Kidalka
-//    Date: 2026-07-26
+//    Date: 2026-07-31
 //
 //    Lang: C++
 //
@@ -50,10 +50,10 @@ namespace Neutrino
         ~Engine();
 
         bool Initialize();
+        void Run();
         void Shutdown();
         bool IsInitialized() const;
         bool IsWindowOpen() const;
-        void PollEvents();
 
         static constexpr int WINDOW_WIDTH = 1024;
         static constexpr int WINDOW_HEIGHT = 768;
