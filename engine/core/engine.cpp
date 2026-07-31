@@ -49,7 +49,7 @@ namespace Neutrino
         Shutdown();
     }
 
-    bool Engine::Initialize() 
+    bool Engine::Initialize(const std::string& appName, int windowWidth, int windowHeight)
     {
         if (initialized_) 
         {
@@ -58,7 +58,7 @@ namespace Neutrino
         
         Logger::Init();
 
-        if (!initializeWindow())
+        if (!initializeWindow(appName, windowWidth, windowHeight))
         {
             Logger::Error("Failed to initialize window");
             return false;
@@ -111,7 +111,7 @@ namespace Neutrino
         return window_ != nullptr && !glfwWindowShouldClose(window_);
     }
 
-    bool Engine::initializeWindow()
+    bool Engine::initializeWindow(const std::string& title, int width, int height)
     {
         if (!glfwInit())
         {
@@ -123,9 +123,9 @@ namespace Neutrino
         glfwWindowHint(GLFW_RESIZABLE, GLFW_FALSE);
 
         window_ = glfwCreateWindow(
-            WINDOW_WIDTH, 
-            WINDOW_HEIGHT, 
-            "Neutrino Engine", 
+            width, 
+            height, 
+            title.c_str(), 
             nullptr, 
             nullptr
         );

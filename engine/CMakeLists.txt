@@ -19,6 +19,7 @@ message(STATUS "Vulkan SDK found: ${Vulkan_INCLUDE_DIR}")
 add_library(NeutrinoEngine SHARED
 	core/engine.cpp
 	core/logger.cpp
+	platform/window.cpp
 )
 
 # Header files

@@ -38,16 +38,20 @@
 
 int main([[maybe_unused]] int argc, [[maybe_unused]] char* argv[]) 
 {
-    std::cout << "================================\n";
-    std::cout << "Neutrino Engine - Version 0.0.1 \n";
-    std::cout << "================================\n\n";
-
     try 
     {
+        const int WINDOW_WIDTH { 1024 };
+        const int WINDOW_HEIGHT { 768 };
+        const std::string appName{ "Neutrino Engine" };
+        
+        std::cout << "================================\n";
+        std::cout << appName << " - Version 0.0.1 \n";
+        std::cout << "================================\n\n";
+
         // create and initialize the engine ...
         Neutrino::Engine engine;
 
-        if (!engine.Initialize()) 
+        if (!engine.Initialize(appName, WINDOW_WIDTH, WINDOW_HEIGHT)) 
         {
             std::cerr << "Error: Unable to initialize engine.\n";
             return 1;

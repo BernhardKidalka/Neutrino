@@ -49,18 +49,15 @@ namespace Neutrino
         Engine();
         ~Engine();
 
-        bool Initialize();
+        bool Initialize(const std::string& appName, int windowWidth, int windowHeight);
         void Run();
         void Shutdown();
         bool IsInitialized() const;
         bool IsWindowOpen() const;
 
-        static constexpr int WINDOW_WIDTH = 1024;
-        static constexpr int WINDOW_HEIGHT = 768;
-
     private:
         // initialization & shutdown methods ...
-        bool initializeWindow();
+        bool initializeWindow(const std::string& title, int width, int height);
         bool initializeVulkan();
         void shutdownWindow();
         void shutdownVulkan();
