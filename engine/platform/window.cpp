@@ -18,7 +18,7 @@
 // Project: Neutrino Engine
 //    File: Neutrino\engine\platform\window.cpp
 //  Author: B. Kidalka
-//    Date: 2026-07-31
+//    Date: 2026-08-01
 //
 //    Lang: C++
 //
@@ -71,6 +71,57 @@ namespace Neutrino
             window_ = nullptr;
         }
         glfwTerminate();
+    }
+    
+    bool Window::ProcessEvents() 
+    {
+        glfwPollEvents();
+        return !glfwWindowShouldClose(window_);
+    }
+
+    bool Window::HasWindowResized() 
+    {
+        bool resized = windowResized_;
+        windowResized_ = false;
+        return resized;
+    }
+    
+    bool Window::CreateVulkanSurface(VkInstance instance, VkSurfaceKHR* surface) 
+    {
+        if (glfwCreateWindowSurface(instance, window_, nullptr, surface) != VK_SUCCESS) 
+        {
+            return false;
+        }
+        return true;
+    }
+    
+    void Window::SetResizeCallback(std::function<void(int, int)> callback) 
+    {
+        resizeCallback = std::move(callback);
+    }
+
+    void Window::SetMouseCallback(std::function < void(float, float, uint32_t) > callback) 
+    {
+        mouseCallback = std::move(callback);
+    }
+
+    void Window::SetKeyboardCallback(std::function < void(uint32_t, bool) > callback) 
+    {
+        keyboardCallback = std::move(callback);
+    }
+
+    void Window::SetCharCallback(std::function<void(uint32_t)> callback) 
+    {
+        characterCallback = std::move(callback);
+    }
+
+    void Window::SetWindowTitle(const std::string& title) 
+    {
+        if (window_) 
+        {
+            desc_.Title = title;
+            glfwSetWindowTitle(window_, title.c_str());
+        }
     }
     
     void Window::windowResizeCallback(GLFWwindow* glfwWindow, int width, int height) 

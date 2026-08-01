@@ -18,7 +18,7 @@
 // Project: Neutrino Engine
 //    File: Neutrino\engine\platform\window.h
 //  Author: B. Kidalka
-//    Date: 2026-07-31
+//    Date: 2026-08-01
 //
 //    Lang: C++
 //
@@ -50,6 +50,17 @@ namespace Neutrino
 
         bool Initialize(const Desc& desc);
         void Shutdown();
+        bool ProcessEvents();
+        bool HasWindowResized();
+        [[nodiscard]] int GetWindowWidth() const { return desc_.Width; }
+        [[nodiscard]] int GetWindowHeight() const { return desc_.Height; }
+        bool CreateVulkanSurface(VkInstance instance, VkSurfaceKHR* surface);
+        void SetResizeCallback(std::function<void(int, int)> callback);
+        void SetMouseCallback(std::function<void(float, float, uint32_t)> callback);
+        void SetKeyboardCallback(std::function<void(uint32_t, bool)> callback);
+        void SetCharCallback(std::function<void(uint32_t)> callback);
+        void SetWindowTitle(const std::string& title);
+        GLFWwindow* GetWindow() const { return window_; }
 
     private:
         // GLFW window handle
