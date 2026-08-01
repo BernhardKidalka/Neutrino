@@ -54,10 +54,13 @@ Neutrino/
 │   ├── CMakeLists.txt          # Engine library configuration
 │   ├── include/
 │   │    └── engine.h
-│   └── core/
-│        ├── engine.cpp
-│        ├── logger.h
-│        └── logger.cpp
+│   ├── core/
+│   │    ├── engine.cpp
+│   │    ├── logger.h
+│   │    └── logger.cpp
+│   └── platform/
+│        ├── window.h
+│        └── window.cpp
 └── src/
     ├── CMakeLists.txt          # Executable configuration
     └── main.cpp
