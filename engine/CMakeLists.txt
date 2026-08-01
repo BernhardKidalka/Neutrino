@@ -20,6 +20,7 @@ add_library(NeutrinoEngine SHARED
 	core/engine.cpp
 	core/logger.cpp
 	platform/window.cpp
+	renderer/renderer_core.cpp
 )
 
 # Header files
