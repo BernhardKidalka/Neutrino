@@ -58,9 +58,12 @@ Neutrino/
 │   │    ├── engine.cpp
 │   │    ├── logger.h
 │   │    └── logger.cpp
-│   └── platform/
-│        ├── window.h
-│        └── window.cpp
+│   ├── platform/
+│   │    ├── window.h
+│   │    └── window.cpp
+│   └── renderer/
+│        ├── renderer.h
+│        └── renderer_core.cpp
 └── src/
     ├── CMakeLists.txt          # Executable configuration
     └── main.cpp
