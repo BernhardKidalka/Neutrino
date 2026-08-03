@@ -57,8 +57,6 @@ int main([[maybe_unused]] int argc, [[maybe_unused]] char* argv[])
             return 1;
         }
 
-        std::cout << "Engine successfully initialized.\n";
-
         // enter engine main loop
         engine.Run();
 

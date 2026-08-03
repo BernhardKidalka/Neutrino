@@ -44,7 +44,9 @@ namespace Neutrino
         }
         
         Logger::Init();
+        Logger::Info("Starting engine initialization ...");
 
+        // create platform window ...
         platformWindow_ = CreateWindow();
         
         Window::Desc windowDesc 
@@ -58,7 +60,15 @@ namespace Neutrino
             Logger::Error("Failed to initialize platform window!");
             return false;
         }
+        // create renderer ...
+        renderer_ = std::make_unique<Renderer>(platformWindow_.get());
+        if (!renderer_->Initialize(appName)) 
+        {
+            Logger::Error("Failed to initialize renderer!");
+            return false;
+        }
 
+        Logger::Info("Engine initialized successfully.");
         initialized_ = true;
         return true;
     }
@@ -94,6 +104,11 @@ namespace Neutrino
         
         Logger::Info("Shutting down engine ...");
         
+        if (renderer_)
+        {
+            renderer_->Shutdown();
+            renderer_.reset();
+        }
         if (platformWindow_)
         {
             platformWindow_->Shutdown();
