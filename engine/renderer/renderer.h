@@ -18,7 +18,7 @@
 // Project: Neutrino Engine
 //    File: Neutrino\engine\renderer\renderer.h
 //  Author: B. Kidalka
-//    Date: 2026-08-01
+//    Date: 2026-08-03
 //
 //    Lang: C++
 //
@@ -29,20 +29,84 @@
 
 #include "platform/window.h"
 
+#include <vector>
+#include <string>
+#include <vulkan/vulkan_raii.hpp>
+
 namespace Neutrino
 {
     class Renderer
     {
     public:
-        Renderer() = default;
-        ~Renderer() = default;
+        explicit Renderer(Window* platformWindow);
+        ~Renderer();
         
-        bool Initialize();
+        bool Initialize(const std::string& appName);
         void Shutdown();
         void RenderFrame();
 
     private:
-        Window* platformWindow_{ nullptr };
+        ///////////////////////////////////////////////////////////////////////////////////////////////
+        // private methods ...
 
+        // check if all required Vulkan validation layers are available
+        bool checkValidationLayerSupport() const;
+        // create Vulkan instance
+        bool createInstance(const std::string& appName);
+
+        ///////////////////////////////////////////////////////////////////////////////////////////////
+        // consts ...
+        
+        // Vulkan validation layers ...
+        const std::vector<const char*> validationLayers_ = 
+        {
+            "VK_LAYER_KHRONOS_validation"
+        };
+        
+        // required device extensions ...
+        const std::vector<const char*> requiredDeviceExtensions_ = 
+        {
+            VK_KHR_SWAPCHAIN_EXTENSION_NAME
+        };
+
+        // optional device extensions ...
+        const std::vector<const char*> optionalDeviceExtensions_ = 
+        {
+            VK_KHR_DYNAMIC_RENDERING_EXTENSION_NAME,
+            VK_KHR_GET_PHYSICAL_DEVICE_PROPERTIES_2_EXTENSION_NAME,
+            VK_KHR_DEPTH_STENCIL_RESOLVE_EXTENSION_NAME,
+            VK_EXT_DESCRIPTOR_INDEXING_EXTENSION_NAME,
+            // robustness and safety
+            VK_EXT_ROBUSTNESS_2_EXTENSION_NAME,
+            // tile/local memory friendly dynamic rendering readback
+            VK_KHR_DYNAMIC_RENDERING_LOCAL_READ_EXTENSION_NAME,
+            // shader tile image for fast tile access
+            VK_EXT_SHADER_TILE_IMAGE_EXTENSION_NAME,
+            // ray query support for ray-traced rendering
+            VK_KHR_DEFERRED_HOST_OPERATIONS_EXTENSION_NAME,
+            VK_KHR_ACCELERATION_STRUCTURE_EXTENSION_NAME,
+            VK_KHR_RAY_QUERY_EXTENSION_NAME
+        };
+
+        ///////////////////////////////////////////////////////////////////////////////////////////////
+        // member variables ...
+        
+        // pointer to the platform window (GLFW window)
+        Window* platformWindow_{ nullptr };
+        // flag indicating whether the renderer has been initialized
+        bool    initialized_{ false };
+        // flag to control Vulkan validation layers (enabled in debug builds, disabled in release builds)
+        bool    enableValidationLayers_{ false };
+        // all device extensions (required + optional)
+        std::vector<const char*> deviceExtensions_;
+        
+        // Vulkan RAII context
+        vk::raii::Context context_;
+        // Vulkan instance and debug messenger
+        vk::raii::Instance instance_ { nullptr };
+        vk::raii::DebugUtilsMessengerEXT debugMessenger_ { nullptr };
+        // Vulkan device
+        vk::raii::PhysicalDevice physicalDevice_ { nullptr };
+        vk::raii::Device device_ { nullptr };
     };
 }

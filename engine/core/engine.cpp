@@ -18,7 +18,7 @@
 // Project: Neutrino Engine
 //    File: Neutrino\engine\core\engine.cpp
 //  Author: B. Kidalka
-//    Date: 2026-07-31
+//    Date: 2026-08-03
 //
 //    Lang: C++
 //
@@ -31,9 +31,6 @@
 
 #include <iostream>
 #include <string_view>
-
-// define dynamic dispatch loader for Vulkan
-VULKAN_HPP_DEFAULT_DISPATCH_LOADER_DYNAMIC_STORAGE
 
 namespace Neutrino 
 {

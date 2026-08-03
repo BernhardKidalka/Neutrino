@@ -18,7 +18,7 @@
 // Project: Neutrino Engine
 //    File: Neutrino\engine\renderer\renderer_core.cpp
 //  Author: B. Kidalka
-//    Date: 2026-08-01
+//    Date: 2026-08-03
 //
 //    Lang: C++
 //
@@ -27,23 +27,175 @@
 //------------------------------------------------------------------------------------------------------
 
 #include "renderer.h"
+#include "core/logger.h"
+
+#include <vulkan/vulkan_hpp_macros.hpp>
+
+// define dynamic dispatch loader for Vulkan - define only once in a .cpp file
+VULKAN_HPP_DEFAULT_DISPATCH_LOADER_DYNAMIC_STORAGE;
+
+#include <vulkan/vk_platform.h>
+#include <vulkan/vulkan.h> // for PFN_vkGetInstanceProcAddr and C types
 
 namespace Neutrino
 {
-    bool Renderer::Initialize()
+    ///////////////////////////////////////////////////////////////////////////////////////////////
+    // construction and destruction ...
+    
+    Renderer::Renderer(Window* platformWindow) : 
+        platformWindow_(platformWindow) 
     {
-        // implementation for renderer initialization
+        // initialize deviceExtensions with required extensions only
+        // optional extensions will be added later after checking device support
+        deviceExtensions_ = requiredDeviceExtensions_;
+    }
+
+    Renderer::~Renderer() 
+    {
+        Shutdown();
+    }
+    
+    ///////////////////////////////////////////////////////////////////////////////////////////////
+    // public methods ...
+    
+    bool Renderer::Initialize(const std::string& appName)
+    {
+        Logger::Info("Starting renderer initialization ...");
+
+#ifdef _DEBUG
+        enableValidationLayers_ = true; // enable validation layers in debug builds
+#endif
+        
+        // initialize the Vulkan-Hpp default dispatcher using the global symbol directly
+        // this avoids differences across Vulkan-Hpp versions for DynamicLoader placement
+        VULKAN_HPP_DEFAULT_DISPATCHER.init(vkGetInstanceProcAddr);
+        
+        // create the Vulkan instance
+        if (!createInstance(appName)) 
+        {
+            Logger::Error("Failed to create Vulkan instance!");
+            return false;
+        }
+        
+        initialized_ = true;
+        Logger::Info("Renderer initialized successfully.");
         return true;
     }
 
     void Renderer::Shutdown()
     {
-        // implementation for renderer shutdown
+        if (!initialized_) 
+        {
+            return;
+        }
+
+        Logger::Info("Starting renderer shutdown ...");
+
+
+        Logger::Info("Renderer shutdown completed.");
+        initialized_ = false;
     }
 
     void Renderer::RenderFrame()
     {
         // implementation for rendering a frame
+    }
+
+    ///////////////////////////////////////////////////////////////////////////////////////////////
+    // private methods ...
+    
+    bool Renderer::checkValidationLayerSupport() const
+    {
+        // get available layers
+        std::vector<vk::LayerProperties> availableLayers = context_.enumerateInstanceLayerProperties();
+
+        // check if all requested layers are available ...
+        for (const char* layerName : validationLayers_) 
+        {
+            bool layerFound { false };
+            for (const auto& layerProperties : availableLayers) 
+            {
+                if (strcmp(layerName, layerProperties.layerName) == 0) 
+                {
+                    layerFound = true;
+                    break;
+                }
+            }
+            if (!layerFound) 
+            {
+                return false;
+            }
+        }
+        return true;
+    }
+
+    bool Renderer::createInstance(const std::string& appName)
+    {
+        try 
+        {
+            // create application info ...
+            vk::ApplicationInfo appInfo
+            {
+                .pApplicationName = appName.c_str(),
+                .applicationVersion = VK_MAKE_VERSION(1, 0, 0),
+                .pEngineName = "Neutrino Engine",
+                .engineVersion = VK_MAKE_VERSION(0, 0, 1),
+                .apiVersion = VK_API_VERSION_1_3
+            };
+
+            // get required extensions ...
+            std::vector<const char*> extensions;
+
+            // add required extensions for GLFW ...
+            uint32_t glfwExtensionCount { 0 };
+            const char** glfwExtensions = glfwGetRequiredInstanceExtensions(&glfwExtensionCount);
+            extensions.insert(extensions.end(), glfwExtensions, glfwExtensions + glfwExtensionCount);
+
+            // add debug extension if validation layers are enabled
+            if (enableValidationLayers_) 
+            {
+                extensions.push_back(VK_EXT_DEBUG_UTILS_EXTENSION_NAME);
+            }
+
+            // create instance info ...
+            vk::InstanceCreateInfo instanceInfo
+            {
+                .pApplicationInfo = &appInfo,
+                .enabledExtensionCount = static_cast<uint32_t>(extensions.size()),
+                .ppEnabledExtensionNames = extensions.data()
+            };
+
+            // enable validation layers if requested ...
+            vk::ValidationFeaturesEXT validationFeatures{};
+            std::vector<vk::ValidationFeatureEnableEXT> enabledValidationFeatures;
+
+            if (enableValidationLayers_) 
+            {
+                if (!checkValidationLayerSupport()) 
+                {
+                    Logger::Error("Vulkan validation layers requested, but not available");
+                    return false;
+                }
+
+                instanceInfo.enabledLayerCount = static_cast<uint32_t>(validationLayers_.size());
+                instanceInfo.ppEnabledLayerNames = validationLayers_.data();
+
+                validationFeatures.enabledValidationFeatureCount = static_cast<uint32_t>(enabledValidationFeatures.size());
+                validationFeatures.pEnabledValidationFeatures = enabledValidationFeatures.data();
+
+                instanceInfo.pNext = &validationFeatures;
+            }
+
+            // finally create Vulkan instance
+            instance_ = vk::raii::Instance(context_, instanceInfo);
+            
+            return true;
+        }
+        catch (const std::exception& e) 
+        {
+            Logger::Error("Vulkan instance creation failed: " + std::string(e.what()));
+            return false;
+        }
     }
 
 }
