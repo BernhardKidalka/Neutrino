@@ -29,18 +29,8 @@
 #include "engine.h"
 #include "logger.h"
 
-#include <iostream>
-#include <string_view>
-
 namespace Neutrino 
 {
-    Engine::Engine() : 
-        initialized_(false), 
-        window_(nullptr), 
-        physicalDevice_(nullptr)
-    {
-    }
-
     Engine::~Engine()
     {
         Shutdown();
@@ -55,16 +45,17 @@ namespace Neutrino
         
         Logger::Init();
 
-        if (!initializeWindow(appName, windowWidth, windowHeight))
+        platformWindow_ = CreateWindow();
+        
+        Window::Desc windowDesc 
         {
-            Logger::Error("Failed to initialize window");
-            return false;
-        }
-
-        if (!initializeVulkan())
+            .Width = windowWidth,
+            .Height = windowHeight,
+            .Title = appName,
+        };
+        if (!platformWindow_->Initialize(windowDesc)) 
         {
-            Logger::Error("Failed to initialize Vulkan");
-            shutdownWindow();
+            Logger::Error("Failed to initialize platform window!");
             return false;
         }
 
@@ -79,323 +70,42 @@ namespace Neutrino
             throw std::runtime_error("Neutrino Engine is not initialized!");
         }
 
-        while (IsWindowOpen())
+        running_ = true;
+
+        // enter engine main loop ...
+        Logger::Info("Starting engine main loop ...");
+        while (running_) 
         {
-            glfwPollEvents();
+            // process platform events ...
+            if (!platformWindow_->ProcessEvents()) 
+            {
+                running_ = false;
+                break;
+            }
         }
     }
 
     void Engine::Shutdown() 
     {
-        if (!initialized_) 
+        if (!initialized_)
         {
             return;
         }
-
-        shutdownVulkan();
-        shutdownWindow();
-
+        
+        Logger::Info("Shutting down engine ...");
+        
+        if (platformWindow_)
+        {
+            platformWindow_->Shutdown();
+            platformWindow_.reset();
+        }
+        
         initialized_ = false;
+        Logger::Info("Engine shut down successfully.");
     }
 
     bool Engine::IsInitialized() const 
     {
         return initialized_;
     }
-
-    bool Engine::IsWindowOpen() const
-    {
-        return window_ != nullptr && !glfwWindowShouldClose(window_);
-    }
-
-    bool Engine::initializeWindow(const std::string& title, int width, int height)
-    {
-        if (!glfwInit())
-        {
-            Logger::Error("Failed to initialize GLFW");
-            return false;
-        }
-
-        glfwWindowHint(GLFW_CLIENT_API, GLFW_NO_API);
-        glfwWindowHint(GLFW_RESIZABLE, GLFW_FALSE);
-
-        window_ = glfwCreateWindow(
-            width, 
-            height, 
-            title.c_str(), 
-            nullptr, 
-            nullptr
-        );
-
-        if (!window_)
-        {
-            Logger::Error("Failed to create GLFW window");
-            glfwTerminate();
-            return false;
-        }
-
-        Logger::Info("GLFW window created successfully.");
-
-        return true;
-    }
-
-    bool Engine::initializeVulkan()
-    {
-        try
-        {
-            if (!createInstance())
-            {
-                Logger::Error("Failed to create Vulkan instance");
-                return false;
-            }
-
-            // initialize function pointers for instance
-            VULKAN_HPP_DEFAULT_DISPATCHER.init(vulkanInstance_.get());
-
-            if (!createSurface())
-            {
-                Logger::Error("Failed to create Vulkan surface");
-                return false;
-            }
-
-            if (!selectPhysicalDevice())
-            {
-                Logger::Error("Failed to select physical device (GPU)");
-                return false;
-            }
-
-            if (!createLogicalDevice())
-            {
-                Logger::Error("Failed to create logical device");
-                return false;
-            }
-
-            // initialize function pointers for device (keeps instance dispatcher intact)
-            VULKAN_HPP_DEFAULT_DISPATCHER.init(logicalDevice_.get());
-
-            Logger::Info("Vulkan initialized successfully.");
-
-            return true;
-        }
-        catch (const vk::SystemError& err)
-        {
-            Logger::Error("Vulkan error: " + std::string(err.what()));
-            return false;
-        }
-        catch (const std::exception& err)
-        {
-            Logger::Error("Exception: " + std::string(err.what()));
-            return false;
-        }
-    }
-
-    bool Engine::createInstance()
-    {
-        // initialize the dynamic dispatcher with global-level functions
-        VULKAN_HPP_DEFAULT_DISPATCHER.init(vkGetInstanceProcAddr);
-
-        // get required extensions from GLFW ...
-        uint32_t glfwExtensionCount = 0;
-        const char** glfwExtensions = glfwGetRequiredInstanceExtensions(&glfwExtensionCount);
-
-        std::vector<const char*> extensions(glfwExtensions, glfwExtensions + glfwExtensionCount);
-
-        vk::ApplicationInfo appInfo
-        {
-            .pApplicationName = "Neutrino Engine",
-            .applicationVersion = VK_MAKE_VERSION(1, 0, 0),
-            .pEngineName = "Neutrino",
-            .engineVersion = VK_MAKE_VERSION(0, 0, 1),
-            .apiVersion = VK_API_VERSION_1_3 // restricted to Vulkan 1.3 to ensure compatibility with MoltenVK (macOS)
-        };
-
-        vk::InstanceCreateInfo instCreateInfo
-        {
-            .pApplicationInfo = &appInfo,
-            .enabledExtensionCount = static_cast<uint32_t>(extensions.size()),
-            .ppEnabledExtensionNames = extensions.data()
-        };
-
-        vulkanInstance_ = vk::createInstanceUnique(instCreateInfo);
-        
-        Logger::Info("Vulkan instance created successfully.");
-
-        return true;
-    }
-
-    bool Engine::createSurface()
-    {
-        VkSurfaceKHR surfaceKHR = nullptr;
-        if (glfwCreateWindowSurface(vulkanInstance_.get(), window_, nullptr, &surfaceKHR) != VK_SUCCESS)
-        {
-            Logger::Error("Failed to create window surface");
-            return false;
-        }
-
-        // store the raw surface handle (will be manually destroyed)
-        surface_ = vk::SurfaceKHR(surfaceKHR);
-
-        Logger::Info("Vulkan surface created successfully.");
-
-        return true;
-    }
-
-    QueueFamilyIndices Engine::findQueueFamilies(vk::PhysicalDevice device) const
-    {
-        QueueFamilyIndices indices;
-
-        auto queueFamilies = device.getQueueFamilyProperties();
-
-        int i = 0;
-        for (const auto& queueFamily : queueFamilies)
-        {
-            if (queueFamily.queueFlags & vk::QueueFlagBits::eGraphics)
-            {
-                indices.graphicsFamily = i;
-            }
-
-            if (device.getSurfaceSupportKHR(i, surface_))
-            {
-                // for now, we use the same queue family for graphics and presentation
-                if (indices.graphicsFamily.has_value())
-                {
-                    break;
-                }
-            }
-
-            i++;
-        }
-
-        return indices;
-    }
-
-    bool Engine::isDeviceSuitable(vk::PhysicalDevice device) const
-    {
-        auto indices = findQueueFamilies(device);
-
-        auto extensions = device.enumerateDeviceExtensionProperties();
-        bool extensionsSupported = false;
-
-        for (const auto& ext : extensions)
-        {
-            if (std::string_view(ext.extensionName) == VK_KHR_SWAPCHAIN_EXTENSION_NAME)
-            {
-                extensionsSupported = true;
-                break;
-            }
-        }
-
-        return indices.IsComplete() && extensionsSupported;
-    }
-
-    bool Engine::selectPhysicalDevice()
-    {
-        auto devices = vulkanInstance_->enumeratePhysicalDevices();
-
-        if (devices.empty())
-        {
-            Logger::Error("No physical devices found");
-            return false;
-        }
-
-        auto it = std::find_if(devices.begin(), devices.end(),
-            [this](vk::PhysicalDevice device) { return isDeviceSuitable(device); });
-
-        if (it == devices.end())
-        {
-            Logger::Error("No suitable physical device found");
-            return false;
-        }
-
-        physicalDevice_ = *it;
-
-        auto properties = physicalDevice_.getProperties();
-        Logger::Info("Selected GPU: " + std::string(properties.deviceName.data()));
-
-        return true;
-    }
-
-    bool Engine::createLogicalDevice()
-    {
-        auto indices = findQueueFamilies(physicalDevice_);
-
-        if (!indices.IsComplete())
-        {
-            Logger::Error("Queue families not complete");
-            return false;
-        }
-
-        float queuePriority = 1.0f;
-        vk::DeviceQueueCreateInfo queueCreateInfo
-        {
-            .queueFamilyIndex = indices.graphicsFamily.value(),
-            .queueCount = 1,
-            .pQueuePriorities = &queuePriority
-        };
-
-        const std::vector<const char*> deviceExtensions = 
-        {
-            VK_KHR_SWAPCHAIN_EXTENSION_NAME
-        };
-
-        vk::PhysicalDeviceFeatures device_features{};
-
-        vk::DeviceCreateInfo deviceCreateInfo
-        {
-            .queueCreateInfoCount = 1,
-            .pQueueCreateInfos = &queueCreateInfo,
-            .enabledExtensionCount = static_cast<uint32_t>(deviceExtensions.size()),
-            .ppEnabledExtensionNames = deviceExtensions.data(),
-            .pEnabledFeatures = &device_features
-        };
-
-        logicalDevice_ = physicalDevice_.createDeviceUnique(deviceCreateInfo);
-
-        graphicsQueue_ = logicalDevice_->getQueue(indices.graphicsFamily.value(), 0);
-
-        Logger::Info("Vulkan logical device created successfully.");
-
-        return true;
-    }
-
-    void Engine::shutdownVulkan()
-    {
-        Logger::Info("Shutting down Vulkan...");
-
-        if (logicalDevice_)
-        {
-            logicalDevice_->waitIdle();
-            logicalDevice_.reset();
-        }
-
-        physicalDevice_ = nullptr;
-
-        // manually destroy surface before instance is destroyed ...
-        if (surface_)
-        {
-            // need to use instance dispatcher to destroy surface
-            VULKAN_HPP_DEFAULT_DISPATCHER.init(vulkanInstance_.get());
-            vulkanInstance_->destroySurfaceKHR(surface_);
-            surface_ = nullptr;
-        }
-
-        Logger::Info("Vulkan instance destroyed.");
-        // vulkan_instance_ is destroyed automatically at end of scope
-    }
-
-    void Engine::shutdownWindow()
-    {
-        Logger::Info("Shutting down GLFW window...");
-
-        if (window_ != nullptr)
-        {
-            glfwDestroyWindow(window_);
-            window_ = nullptr;
-        }
-        
-        Logger::Info("GLFW window destroyed.");
-
-        glfwTerminate();
-    }
-
 } // namespace Neutrino

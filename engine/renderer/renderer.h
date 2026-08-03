@@ -27,7 +27,7 @@
 //------------------------------------------------------------------------------------------------------
 #pragma once
 
-#include "platform/window.h"
+#include "../platform/window.h"
 
 #include <vector>
 #include <string>

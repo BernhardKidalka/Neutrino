@@ -18,7 +18,7 @@
 // Project: Neutrino Engine
 //    File: Neutrino\engine\platform\window.cpp
 //  Author: B. Kidalka
-//    Date: 2026-08-01
+//    Date: 2026-08-03
 //
 //    Lang: C++
 //
@@ -30,10 +30,14 @@
 
 #include <stdexcept>
 
+#include "../core/logger.h"
+
 namespace Neutrino
 {
     bool Window::Initialize(const Desc& desc)
     {
+        Logger::Info("Initializing platform window ...");
+        
         desc_ = desc;
         
         if (!glfwInit()) 
@@ -60,17 +64,20 @@ namespace Neutrino
 
         glfwGetFramebufferSize(window_, &desc_.Width, &desc_.Height);
 
+        Logger::Info("Platform window initialized successfully.");
         return true;
     }
     
     void Window::Shutdown() 
     {
+        Logger::Info("Shutting down platform window ...");
         if (window_) 
         {
             glfwDestroyWindow(window_);
             window_ = nullptr;
         }
         glfwTerminate();
+        Logger::Info("Platform window shut down successfully.");
     }
     
     bool Window::ProcessEvents() 
