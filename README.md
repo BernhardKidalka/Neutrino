@@ -5,6 +5,10 @@
 **Neutrino** is a Real-Time **Rendering and Compute Engine** implemented with **Vulkan** and **C++**.
 Neutrino is based on the engine example implementation from the Khronos Vulkan Tutorial (https://docs.vulkan.org/tutorial/latest/00_Introduction.html).
 
+### Note
+
+This repository is for my private education and experiments. It is works in progress and is in a very early state.
+
 ## Prerequisites
 
 - **CMake** >= 3.20
