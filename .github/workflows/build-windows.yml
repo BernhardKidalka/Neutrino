@@ -9,29 +9,42 @@ on:
 jobs:
   build:
     runs-on: windows-latest
-    
+
     steps:
-    - uses: actions/checkout@v4
-    
-    - name: Install Vulkan SDK
-      uses: hmartin5/setup-vulkan-tools@v3
-      with:
-        vulkan-query-version: latest
-        vulkan-use-latest: true
-    
-    - name: Configure CMake
-      run: |
-        mkdir build
-        cd build
-        cmake -G "Visual Studio 17 2022" ..
-    
-    - name: Build
-      run: |
-        cd build
-        cmake --build . --config Release
-    
-    - name: Upload artifacts
-      uses: actions/upload-artifact@v4
-      with:
-        name: neutrino-windows
-        path: build/bin/Release/Neutrino.exe
+      - uses: actions/checkout@v4
+
+      - name: Install Vulkan SDK (Chocolatey)
+        shell: pwsh
+        run: |
+          choco install vulkan-sdk -y
+          # Locate latest installed SDK directory under C:\VulkanSDK
+          $sdkDir = Get-ChildItem 'C:\VulkanSDK' | Where-Object {$_.PSIsContainer} | Sort-Object Name -Descending | Select-Object -First 1
+          if (-not $sdkDir) { throw "Vulkan SDK not found after choco install" }
+          Write-Host "Vulkan SDK found: $($sdkDir.FullName)"
+          # Expose VULKAN_SDK to subsequent steps and add Bin to PATH
+          Add-Content -Path $env:GITHUB_ENV -Value "VULKAN_SDK=$($sdkDir.FullName)"
+          Add-Content -Path $env:GITHUB_PATH -Value "$($sdkDir.FullName)\Bin"
+          # Prepend SDK include/lib to INCLUDE and LIB environment variables
+          Add-Content -Path $env:GITHUB_ENV -Value "INCLUDE=$($sdkDir.FullName)\Include;$($env:INCLUDE)"
+          Add-Content -Path $env:GITHUB_ENV -Value "LIB=$($sdkDir.FullName)\Lib;$($env:LIB)"
+
+      - name: Configure CMake
+        shell: pwsh
+        run: |
+          mkdir -Force build
+          Set-Location build
+          cmake -G "Visual Studio 18 2026" .. `
+            -DVulkan_INCLUDE_DIR="$env:VULKAN_SDK\Include" `
+            -DVulkan_LIBRARY="$env:VULKAN_SDK\Lib\vulkan-1.lib"
+
+      - name: Build
+        shell: pwsh
+        run: |
+          Set-Location build
+          cmake --build . --config Release --parallel
+
+      - name: Upload artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: neutrino-windows
+          path: build/bin/Release/Neutrino.exe
