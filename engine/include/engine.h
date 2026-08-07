@@ -18,7 +18,7 @@
 // Project: Neutrino Engine
 //    File: Neutrino\engine\include\engine.h
 //  Author: B. Kidalka
-//    Date: 2026-08-03
+//    Date: 2026-08-07
 //
 //    Lang: C++
 //
@@ -44,6 +44,10 @@ namespace Neutrino
         bool IsInitialized() const;
 
     private:
+        void handleResize(int width, int height) const;
+        void handleMouseInput(float x, float y, uint32_t buttons);
+        void handleKeyInput(uint32_t key, bool pressed);
+
         // engine state ...
         bool initialized_ { false };
         bool running_{ false };

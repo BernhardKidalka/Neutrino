@@ -18,7 +18,7 @@
 // Project: Neutrino Engine
 //    File: Neutrino\engine\renderer\renderer_core.cpp
 //  Author: B. Kidalka
-//    Date: 2026-08-03
+//    Date: 2026-08-07
 //
 //    Lang: C++
 //
@@ -27,7 +27,7 @@
 //------------------------------------------------------------------------------------------------------
 
 #include "renderer.h"
-#include "core/logger.h"
+#include "../core/logger.h"
 
 #include <vulkan/vulkan_hpp_macros.hpp>
 
@@ -98,7 +98,7 @@ namespace Neutrino
 
     void Renderer::RenderFrame()
     {
-        // implementation for rendering a frame
+        // TODO: implementation for rendering a frame
     }
 
     ///////////////////////////////////////////////////////////////////////////////////////////////

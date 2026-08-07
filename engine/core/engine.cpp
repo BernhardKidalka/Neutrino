@@ -18,7 +18,7 @@
 // Project: Neutrino Engine
 //    File: Neutrino\engine\core\engine.cpp
 //  Author: B. Kidalka
-//    Date: 2026-08-03
+//    Date: 2026-08-07
 //
 //    Lang: C++
 //
@@ -31,10 +31,16 @@
 
 namespace Neutrino 
 {
+    ///////////////////////////////////////////////////////////////////////////////////////////////
+    // construction and destruction ...
+
     Engine::~Engine()
     {
         Shutdown();
     }
+    
+    ///////////////////////////////////////////////////////////////////////////////////////////////
+    // public methods ...
 
     bool Engine::Initialize(const std::string& appName, int windowWidth, int windowHeight)
     {
@@ -60,6 +66,34 @@ namespace Neutrino
             Logger::Error("Failed to initialize platform window!");
             return false;
         }
+        
+        // set resize callback
+        platformWindow_->SetResizeCallback([this](int width, int height) 
+        {
+            handleResize(width, height);
+        });
+
+        // set mouse callback
+        platformWindow_->SetMouseCallback([this](float x, float y, uint32_t buttons) 
+        {
+            handleMouseInput(x, y, buttons);
+        });
+
+        // set keyboard callback
+        platformWindow_->SetKeyboardCallback([this](uint32_t key, bool pressed) 
+        {
+            handleKeyInput(key, pressed);
+        });
+
+        // set char callback
+        platformWindow_->SetCharCallback([this](uint32_t c) 
+        {
+            //if (imguiSystem) 
+            //{
+            //    imguiSystem->HandleChar(c);
+            //}
+        });
+
         // create renderer ...
         renderer_ = std::make_unique<Renderer>(platformWindow_.get());
         if (!renderer_->Initialize(appName)) 
@@ -123,4 +157,30 @@ namespace Neutrino
     {
         return initialized_;
     }
+
+    ///////////////////////////////////////////////////////////////////////////////////////////////
+    // private methods ...
+    
+    void Engine::handleResize(int width, int height) const 
+    {
+        if (height <= 0 || width <= 0) 
+        {
+            return;
+        }
+        // TODO:
+        // update the active camera's aspect ratio
+        // notify the renderer that the framebuffer has been resized
+        // notify ImGui system about the resize
+    }
+    
+    void Engine::handleMouseInput([[maybe_unused]] float x, [[maybe_unused]] float y, [[maybe_unused]] uint32_t buttons)
+    {
+        // TODO: mouse input handling logic ...    
+    }
+
+    void Engine::handleKeyInput([[maybe_unused]] uint32_t key, [[maybe_unused]] bool pressed)
+    {
+        // TODO: keyboard input handling logic ...
+    }
+
 } // namespace Neutrino
