@@ -23,12 +23,16 @@ jobs:
       - name: Install dependencies (robust)
         run: |
           set -euo pipefail
+          export DEBIAN_FRONTEND=noninteractive
           sudo apt-get update
 
-          # Base packages required for build
-          PKGS_BASE="vulkan-tools libvulkan-dev libglfw3-dev build-essential cmake"
+          # Base packages required for build (include Wayland/xkbcommon/X/ALSA dev packages)
+          PKGS_BASE="vulkan-tools libvulkan-dev libglfw3-dev build-essential cmake pkg-config \
+            libxkbcommon-dev libwayland-dev libwayland-egl-dev libwayland-cursor-dev \
+            libx11-dev libxrandr-dev libxi-dev libasound2-dev"
+
           echo "Installing base packages: $PKGS_BASE"
-          sudo apt-get install -y $PKGS_BASE
+          sudo apt-get install -y --no-install-recommends $PKGS_BASE
 
           # Helper: check whether apt has a candidate for a package
           has_candidate() {
@@ -40,13 +44,13 @@ jobs:
             return 1
           }
 
-          # Install an available validation/utility package if present
+          # Install an available Vulkan validation/utility package if present
           if has_candidate vulkan-validationlayers-dev; then
             echo "Found vulkan-validationlayers-dev, installing..."
-            sudo apt-get install -y vulkan-validationlayers-dev
+            sudo apt-get install -y --no-install-recommends vulkan-validationlayers-dev
           elif has_candidate vulkan-utility-libraries-dev; then
             echo "Found vulkan-utility-libraries-dev, installing..."
-            sudo apt-get install -y vulkan-utility-libraries-dev
+            sudo apt-get install -y --no-install-recommends vulkan-utility-libraries-dev
           else
             echo "No Vulkan validation/utility package available; continuing without it"
           fi
