@@ -18,7 +18,7 @@
 // Project: Neutrino Engine
 //    File: Neutrino\engine\renderer\renderer.h
 //  Author: B. Kidalka
-//    Date: 2026-08-03
+//    Date: 2026-08-07
 //
 //    Lang: C++
 //
@@ -31,7 +31,21 @@
 
 #include <vector>
 #include <string>
+
+#include <vulkan/vk_platform.h>
+#include <vulkan/vulkan_hpp_macros.hpp>
 #include <vulkan/vulkan_raii.hpp>
+
+// fallback defines for optional extension names (allow compiling against older headers)
+#ifndef VK_EXT_ROBUSTNESS_2_EXTENSION_NAME
+#	define VK_EXT_ROBUSTNESS_2_EXTENSION_NAME "VK_EXT_robustness2"
+#endif
+#ifndef VK_KHR_DYNAMIC_RENDERING_LOCAL_READ_EXTENSION_NAME
+#	define VK_KHR_DYNAMIC_RENDERING_LOCAL_READ_EXTENSION_NAME "VK_KHR_dynamic_rendering_local_read"
+#endif
+#ifndef VK_EXT_SHADER_TILE_IMAGE_EXTENSION_NAME
+#	define VK_EXT_SHADER_TILE_IMAGE_EXTENSION_NAME "VK_EXT_shader_tile_image"
+#endif
 
 namespace Neutrino
 {

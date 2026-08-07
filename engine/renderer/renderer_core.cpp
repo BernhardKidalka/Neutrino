@@ -29,8 +29,6 @@
 #include "renderer.h"
 #include "../core/logger.h"
 
-#include <vulkan/vulkan_hpp_macros.hpp>
-
 // define dynamic dispatch loader for Vulkan - define only once in a .cpp file
 VULKAN_HPP_DEFAULT_DISPATCH_LOADER_DYNAMIC_STORAGE;
 
