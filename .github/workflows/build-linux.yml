@@ -22,24 +22,23 @@ jobs:
 
       - name: Install dependencies (robust)
         run: |
+          set -euo pipefail
           sudo apt-get update
 
-          # Base packages
-          PKGS="vulkan-tools libvulkan-dev libglfw3-dev build-essential cmake"
+          # Install base packages needed for build
+          PKGS_BASE="vulkan-tools libvulkan-dev libglfw3-dev build-essential cmake"
+          echo "Installing base packages: $PKGS_BASE"
+          sudo apt-get install -y $PKGS_BASE
 
-          # Pick a validation-layers package if available
-          if apt-cache show vulkan-validationlayers-dev >/dev/null 2>&1; then
-            echo "Found vulkan-validationlayers-dev"
-            PKGS="$PKGS vulkan-validationlayers-dev"
-          elif apt-cache show vulkan-utility-libraries-dev >/dev/null 2>&1; then
-            echo "Found vulkan-utility-libraries-dev"
-            PKGS="$PKGS vulkan-utility-libraries-dev"
+          # Try to install a validation/utility package; fall back if first is unavailable
+          echo "Attempting to install Vulkan validation layers or utility libraries"
+          if sudo apt-get install -y vulkan-validationlayers-dev; then
+            echo "Installed vulkan-validationlayers-dev"
+          elif sudo apt-get install -y vulkan-utility-libraries-dev; then
+            echo "Installed vulkan-utility-libraries-dev"
           else
             echo "No Vulkan validation/utility package available; continuing without it"
           fi
-
-          echo "Installing: $PKGS"
-          sudo apt-get install -y $PKGS
 
       - name: Configure CMake
         run: |
