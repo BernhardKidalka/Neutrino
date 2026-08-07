@@ -16,7 +16,7 @@ jobs:
       - name: Install Vulkan SDK (Chocolatey)
         shell: pwsh
         run: |
-          choco install vulkan-sdk -y
+          choco install vulkan-sdk --version=1.4.341.1 -y
           # Locate latest installed SDK directory under C:\VulkanSDK
           $sdkDir = Get-ChildItem 'C:\VulkanSDK' | Where-Object {$_.PSIsContainer} | Sort-Object Name -Descending | Select-Object -First 1
           if (-not $sdkDir) { throw "Vulkan SDK not found after choco install" }
