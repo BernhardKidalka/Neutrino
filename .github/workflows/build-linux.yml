@@ -20,16 +20,35 @@ jobs:
         run: |
           git submodule update --init --recursive
 
-      - name: Install dependencies
+      - name: Install dependencies (robust)
         run: |
           sudo apt-get update
-          # Use vulkan-utility-libraries-dev as replacement for validationlayers package on some distros
-          sudo apt-get install -y vulkan-tools libvulkan-dev vulkan-utility-libraries-dev libglfw3-dev build-essential cmake
+
+          # Base packages
+          PKGS="vulkan-tools libvulkan-dev libglfw3-dev build-essential cmake"
+
+          # Pick a validation-layers package if available
+          if apt-cache show vulkan-validationlayers-dev >/dev/null 2>&1; then
+            echo "Found vulkan-validationlayers-dev"
+            PKGS="$PKGS vulkan-validationlayers-dev"
+          elif apt-cache show vulkan-utility-libraries-dev >/dev/null 2>&1; then
+            echo "Found vulkan-utility-libraries-dev"
+            PKGS="$PKGS vulkan-utility-libraries-dev"
+          else
+            echo "No Vulkan validation/utility package available; continuing without it"
+          fi
+
+          echo "Installing: $PKGS"
+          sudo apt-get install -y $PKGS
+
+      - name: Configure CMake
+        run: |
+          mkdir -p build
+          cmake -S . -B build -DCMAKE_BUILD_TYPE=Release
 
       - name: Build
         run: |
-          cd build
-          make -j$(nproc)
+          cmake --build build --parallel
 
       - name: Upload artifacts
         uses: actions/upload-artifact@v7
