@@ -12,19 +12,35 @@ jobs:
 
     steps:
       - uses: actions/checkout@v4
+        with:
+          submodules: recursive
+          fetch-depth: 0
+
+      - name: Init submodules (fallback)
+        shell: pwsh
+        run: |
+          git submodule update --init --recursive
 
       - name: Install Vulkan SDK (Chocolatey)
         shell: pwsh
         run: |
           choco install vulkan-sdk -y
-          # Locate latest installed SDK directory under C:\VulkanSDK
+          # Try to find installed SDK directory under C:\VulkanSDK
+          Start-Sleep -Seconds 2
+
+      - name: Verify Vulkan SDK and export env
+        shell: pwsh
+        run: |
+          if (-not (Test-Path 'C:\VulkanSDK')) {
+            Write-Host "C:\VulkanSDK not found; listing possible install locations..."
+            Get-ChildItem C:\ -Directory -ErrorAction SilentlyContinue | Where-Object { $_.Name -match 'Vulkan' } | Select-Object FullName
+            throw "Vulkan SDK not found under C:\VulkanSDK"
+          }
           $sdkDir = Get-ChildItem 'C:\VulkanSDK' | Where-Object {$_.PSIsContainer} | Sort-Object Name -Descending | Select-Object -First 1
-          if (-not $sdkDir) { throw "Vulkan SDK not found after choco install" }
+          if (-not $sdkDir) { throw "Vulkan SDK not found under C:\VulkanSDK" }
           Write-Host "Vulkan SDK found: $($sdkDir.FullName)"
-          # Expose VULKAN_SDK to subsequent steps and add Bin to PATH
           Add-Content -Path $env:GITHUB_ENV -Value "VULKAN_SDK=$($sdkDir.FullName)"
           Add-Content -Path $env:GITHUB_PATH -Value "$($sdkDir.FullName)\Bin"
-          # Prepend SDK include/lib to INCLUDE and LIB environment variables
           Add-Content -Path $env:GITHUB_ENV -Value "INCLUDE=$($sdkDir.FullName)\Include;$($env:INCLUDE)"
           Add-Content -Path $env:GITHUB_ENV -Value "LIB=$($sdkDir.FullName)\Lib;$($env:LIB)"
 

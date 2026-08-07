@@ -9,22 +9,30 @@ on:
 jobs:
   build:
     runs-on: ubuntu-latest
-    
+
     steps:
-    - uses: actions/checkout@v4
-    
-    - name: Install dependencies
-      run: |
-        sudo apt-get update
-        sudo apt-get install -y vulkan-tools libvulkan-dev vulkan-validationlayers-dev libglfw3-dev build-essential cmake
-    
-    - name: Build
-      run: |
-        cd build
-        make -j$(nproc)
-    
-    - name: Upload artifacts
-      uses: actions/upload-artifact@v7
-      with:
-        name: neutrino-linux
-        path: build/bin/Neutrino
+      - uses: actions/checkout@v4
+        with:
+          submodules: recursive
+          fetch-depth: 0
+
+      - name: Init submodules (fallback)
+        run: |
+          git submodule update --init --recursive
+
+      - name: Install dependencies
+        run: |
+          sudo apt-get update
+          # Use vulkan-utility-libraries-dev as replacement for validationlayers package on some distros
+          sudo apt-get install -y vulkan-tools libvulkan-dev vulkan-utility-libraries-dev libglfw3-dev build-essential cmake
+
+      - name: Build
+        run: |
+          cd build
+          make -j$(nproc)
+
+      - name: Upload artifacts
+        uses: actions/upload-artifact@v7
+        with:
+          name: neutrino-linux
+          path: build/bin/Neutrino
