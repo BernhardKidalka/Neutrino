@@ -29,7 +29,7 @@ jobs:
           # Base packages required for build and common dev headers
           PKGS_BASE="vulkan-tools libvulkan-dev libglfw3-dev build-essential cmake pkg-config \
             libxkbcommon-dev libwayland-dev libegl1-mesa-dev libwayland-egl1-mesa libwayland-cursor0 \
-            libx11-dev libxrandr-dev libxi-dev libasound2-dev"
+            libx11-dev libxrandr-dev libxi-dev libxinerama-dev libasound2-dev"
           echo "Installing base packages: $PKGS_BASE"
           sudo apt-get install -y --no-install-recommends $PKGS_BASE
 
