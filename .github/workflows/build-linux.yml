@@ -20,17 +20,15 @@ jobs:
         run: |
           git submodule update --init --recursive
 
-      - name: Install dependencies (robust)
+      - name: Install dependencies (robust, with alternatives)
         run: |
           set -euo pipefail
           export DEBIAN_FRONTEND=noninteractive
           sudo apt-get update
 
-          # Base packages required for build (include Wayland/xkbcommon/X/ALSA dev packages)
+          # Base packages required for build (leave out packages with uncertain names)
           PKGS_BASE="vulkan-tools libvulkan-dev libglfw3-dev build-essential cmake pkg-config \
-            libxkbcommon-dev libwayland-dev libwayland-egl-dev libwayland-cursor-dev \
-            libx11-dev libxrandr-dev libxi-dev libasound2-dev"
-
+            libxkbcommon-dev libwayland-dev libx11-dev libxrandr-dev libxi-dev libasound2-dev"
           echo "Installing base packages: $PKGS_BASE"
           sudo apt-get install -y --no-install-recommends $PKGS_BASE
 
@@ -44,15 +42,35 @@ jobs:
             return 1
           }
 
-          # Install an available Vulkan validation/utility package if present
-          if has_candidate vulkan-validationlayers-dev; then
-            echo "Found vulkan-validationlayers-dev, installing..."
-            sudo apt-get install -y --no-install-recommends vulkan-validationlayers-dev
-          elif has_candidate vulkan-utility-libraries-dev; then
-            echo "Found vulkan-utility-libraries-dev, installing..."
-            sudo apt-get install -y --no-install-recommends vulkan-utility-libraries-dev
+          # Helper: attempt to install the first available package from a list
+          try_install_first_available() {
+            for pkg in "$@"; do
+              if has_candidate "$pkg"; then
+                echo "Installing $pkg"
+                sudo apt-get install -y --no-install-recommends "$pkg"
+                return 0
+              fi
+            done
+            return 1
+          }
+
+          # Install Vulkan validation/utility package if available
+          if try_install_first_available vulkan-validationlayers-dev vulkan-utility-libraries-dev; then
+            echo "Installed a Vulkan validation/utility package"
           else
             echo "No Vulkan validation/utility package available; continuing without it"
+          fi
+
+          # Install Wayland EGL / cursor alternatives if available
+          # Try common alternative package names to cover different distros/images
+          try_install_first_available libwayland-egl-dev libwayland-egl1-mesa libwayland-egl1
+          if [ $? -ne 0 ]; then
+            echo "No libwayland-egl package available; continuing"
+          fi
+
+          try_install_first_available libwayland-cursor-dev libwayland-cursor0
+          if [ $? -ne 0 ]; then
+            echo "No libwayland-cursor package available; continuing"
           fi
 
       - name: Configure CMake
