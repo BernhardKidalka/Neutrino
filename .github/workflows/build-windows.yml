@@ -44,7 +44,7 @@ jobs:
           cmake --build . --config Release --parallel
 
       - name: Upload artifacts
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: neutrino-windows
           path: build/bin/Release/Neutrino.exe
