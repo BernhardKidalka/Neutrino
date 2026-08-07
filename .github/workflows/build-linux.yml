@@ -25,17 +25,28 @@ jobs:
           set -euo pipefail
           sudo apt-get update
 
-          # Install base packages needed for build
+          # Base packages required for build
           PKGS_BASE="vulkan-tools libvulkan-dev libglfw3-dev build-essential cmake"
           echo "Installing base packages: $PKGS_BASE"
           sudo apt-get install -y $PKGS_BASE
 
-          # Try to install a validation/utility package; fall back if first is unavailable
-          echo "Attempting to install Vulkan validation layers or utility libraries"
-          if sudo apt-get install -y vulkan-validationlayers-dev; then
-            echo "Installed vulkan-validationlayers-dev"
-          elif sudo apt-get install -y vulkan-utility-libraries-dev; then
-            echo "Installed vulkan-utility-libraries-dev"
+          # Helper: check whether apt has a candidate for a package
+          has_candidate() {
+            pkg="$1"
+            cand=$(apt-cache policy "$pkg" 2>/dev/null | awk '/Candidate:/ {print $2}')
+            if [ -n "$cand" ] && [ "$cand" != "(none)" ]; then
+              return 0
+            fi
+            return 1
+          }
+
+          # Install an available validation/utility package if present
+          if has_candidate vulkan-validationlayers-dev; then
+            echo "Found vulkan-validationlayers-dev, installing..."
+            sudo apt-get install -y vulkan-validationlayers-dev
+          elif has_candidate vulkan-utility-libraries-dev; then
+            echo "Found vulkan-utility-libraries-dev, installing..."
+            sudo apt-get install -y vulkan-utility-libraries-dev
           else
             echo "No Vulkan validation/utility package available; continuing without it"
           fi
