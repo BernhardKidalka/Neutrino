@@ -267,7 +267,7 @@ namespace Neutrino
                 .messageType = vk::DebugUtilsMessageTypeFlagBitsEXT::eGeneral |
                     vk::DebugUtilsMessageTypeFlagBitsEXT::eValidation |
                     vk::DebugUtilsMessageTypeFlagBitsEXT::ePerformance,
-                .pfnUserCallback = &debugCallbackWrapper
+                .pfnUserCallback = static_cast<vk::PFN_DebugUtilsMessengerCallbackEXT>(&debugCallbackWrapper)
             };
 
             // create debug messenger
