@@ -57,24 +57,6 @@ static VKAPI_ATTR VkBool32 VKAPI_CALL debugCallbackVkRaii(
     return VK_FALSE;
 }
 
-// cross-platform wrapper that bridges C types to C++ types
-// this function wraps debugCallbackVkRaii to match vk::PFN_DebugUtilsMessengerCallbackEXT signature
-// callback matches vk::PFN_DebugUtilsMessengerCallbackEXT signature exactly
-static VKAPI_ATTR vk::Bool32 VKAPI_CALL debugCallbackWrapper(
-    vk::DebugUtilsMessageSeverityFlagBitsEXT messageSeverity,
-    [[maybe_unused]] vk::DebugUtilsMessageTypeFlagsEXT messageType,
-    const vk::DebugUtilsMessengerCallbackDataEXT* pCallbackData,
-    [[maybe_unused]] void* pUserData)
-{
-    // Call the C-style callback with cast parameters
-    return static_cast<vk::Bool32>(debugCallbackVkRaii(
-        static_cast<VkDebugUtilsMessageSeverityFlagBitsEXT>(messageSeverity),
-        static_cast<VkDebugUtilsMessageTypeFlagsEXT>(messageType),
-        reinterpret_cast<const VkDebugUtilsMessengerCallbackDataEXT*>(pCallbackData),
-        pUserData
-    ));
-}
-
 namespace Neutrino
 {
     ///////////////////////////////////////////////////////////////////////////////////////////////
@@ -268,7 +250,18 @@ namespace Neutrino
                 .messageType = vk::DebugUtilsMessageTypeFlagBitsEXT::eGeneral |
                     vk::DebugUtilsMessageTypeFlagBitsEXT::eValidation |
                     vk::DebugUtilsMessageTypeFlagBitsEXT::ePerformance,
-                .pfnUserCallback = &debugCallbackWrapper
+                .pfnUserCallback = [](vk::DebugUtilsMessageSeverityFlagBitsEXT messageSeverity,
+                                      vk::DebugUtilsMessageTypeFlagsEXT messageType,
+                                      const vk::DebugUtilsMessengerCallbackDataEXT* pCallbackData,
+                                      void* pUserData) -> vk::Bool32
+                {
+                    return static_cast<vk::Bool32>(debugCallbackVkRaii(
+                        static_cast<VkDebugUtilsMessageSeverityFlagBitsEXT>(messageSeverity),
+                        static_cast<VkDebugUtilsMessageTypeFlagsEXT>(messageType),
+                        reinterpret_cast<const VkDebugUtilsMessengerCallbackDataEXT*>(pCallbackData),
+                        pUserData
+                    ));
+                }
             };
 
             // create debug messenger
