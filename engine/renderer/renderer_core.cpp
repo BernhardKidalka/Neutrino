@@ -250,7 +250,7 @@ namespace Neutrino
                 .messageType = vk::DebugUtilsMessageTypeFlagBitsEXT::eGeneral |
                     vk::DebugUtilsMessageTypeFlagBitsEXT::eValidation |
                     vk::DebugUtilsMessageTypeFlagBitsEXT::ePerformance,
-                .pfnUserCallback = &debugCallbackVkHpp
+                .pfnUserCallback = debugCallbackVkHpp
             };
 
             // create debug messenger
