@@ -18,7 +18,7 @@
 // Project: Neutrino Engine
 //    File: Neutrino\engine\renderer\renderer.h
 //  Author: B. Kidalka
-//    Date: 2026-08-07
+//    Date: 2026-08-08
 //
 //    Lang: C++
 //
@@ -67,6 +67,10 @@ namespace Neutrino
         bool checkValidationLayerSupport() const;
         // create Vulkan instance
         bool createInstance(const std::string& appName);
+        // setup Vulkan debug messenger for validation layer messages
+        bool setupDebugMessenger(bool enableValidationLayers);
+        // create Vulkan surface for rendering
+        bool createSurface();
 
         ///////////////////////////////////////////////////////////////////////////////////////////////
         // consts ...
@@ -119,6 +123,8 @@ namespace Neutrino
         // Vulkan instance and debug messenger
         vk::raii::Instance instance_ { nullptr };
         vk::raii::DebugUtilsMessengerEXT debugMessenger_ { nullptr };
+        // Vulkan surface
+        vk::raii::SurfaceKHR surface_ = nullptr;
         // Vulkan device
         vk::raii::PhysicalDevice physicalDevice_ { nullptr };
         vk::raii::Device device_ { nullptr };

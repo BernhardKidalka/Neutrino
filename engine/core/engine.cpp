@@ -18,7 +18,7 @@
 // Project: Neutrino Engine
 //    File: Neutrino\engine\core\engine.cpp
 //  Author: B. Kidalka
-//    Date: 2026-08-07
+//    Date: 2026-08-08
 //
 //    Lang: C++
 //
@@ -86,7 +86,7 @@ namespace Neutrino
         });
 
         // set char callback
-        platformWindow_->SetCharCallback([this](uint32_t c) 
+        platformWindow_->SetCharCallback([this]([[maybe_unused]] uint32_t c)
         {
             //if (imguiSystem) 
             //{

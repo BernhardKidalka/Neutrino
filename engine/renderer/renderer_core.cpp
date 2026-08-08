@@ -18,7 +18,7 @@
 // Project: Neutrino Engine
 //    File: Neutrino\engine\renderer\renderer_core.cpp
 //  Author: B. Kidalka
-//    Date: 2026-08-07
+//    Date: 2026-08-08
 //
 //    Lang: C++
 //
@@ -34,6 +34,28 @@ VULKAN_HPP_DEFAULT_DISPATCH_LOADER_DYNAMIC_STORAGE;
 
 #include <vulkan/vk_platform.h>
 #include <vulkan/vulkan.h> // for PFN_vkGetInstanceProcAddr and C types
+
+// Vulkan-Hpp style callback signature for newer headers expecting vk:: types
+static VKAPI_ATTR vk::Bool32 VKAPI_CALL debugCallbackVkHpp(
+    vk::DebugUtilsMessageSeverityFlagBitsEXT messageSeverity,
+    [[maybe_unused]] vk::DebugUtilsMessageTypeFlagsEXT messageType,
+    const vk::DebugUtilsMessengerCallbackDataEXT* pCallbackData,
+    [[maybe_unused]] void* pUserData) 
+{
+    if (messageSeverity == vk::DebugUtilsMessageSeverityFlagBitsEXT::eError) 
+    {
+        Neutrino::Logger::Error("Validation layer: " + std::string(pCallbackData->pMessage));
+    }
+    else if (messageSeverity == vk::DebugUtilsMessageSeverityFlagBitsEXT::eWarning)
+    {
+        Neutrino::Logger::Warning("Validation layer: " + std::string(pCallbackData->pMessage));
+    }
+    else 
+    {
+        Neutrino::Logger::Info("Validation layer: " + std::string(pCallbackData->pMessage));
+    }
+    return vk::False;
+}
 
 namespace Neutrino
 {
@@ -75,6 +97,20 @@ namespace Neutrino
             return false;
         }
         
+        // setup debug messenger
+        if (!setupDebugMessenger(enableValidationLayers_)) 
+        {
+            Logger::Error("Failed to setup debug messenger");
+            return false;
+        }
+
+        // create surface
+        if (!createSurface()) 
+        {
+            Logger::Error("Failed to create surface");
+            return false;
+        }
+
         initialized_ = true;
         Logger::Info("Renderer initialized successfully.");
         return true;
@@ -192,6 +228,60 @@ namespace Neutrino
         catch (const std::exception& e) 
         {
             Logger::Error("Vulkan instance creation failed: " + std::string(e.what()));
+            return false;
+        }
+    }
+
+    bool Renderer::setupDebugMessenger(bool enableValidationLayers) 
+    {
+        if (!enableValidationLayers) 
+        {
+            return true;
+        }
+        try 
+        {
+            // setup debug messenger create info ...
+            vk::DebugUtilsMessengerCreateInfoEXT createInfo
+            {
+                .messageSeverity = vk::DebugUtilsMessageSeverityFlagBitsEXT::eVerbose |
+                    vk::DebugUtilsMessageSeverityFlagBitsEXT::eInfo |
+                    vk::DebugUtilsMessageSeverityFlagBitsEXT::eWarning |
+                    vk::DebugUtilsMessageSeverityFlagBitsEXT::eError,
+                .messageType = vk::DebugUtilsMessageTypeFlagBitsEXT::eGeneral |
+                    vk::DebugUtilsMessageTypeFlagBitsEXT::eValidation |
+                    vk::DebugUtilsMessageTypeFlagBitsEXT::ePerformance,
+                .pfnUserCallback = &debugCallbackVkHpp
+            };
+
+            // create debug messenger
+            debugMessenger_ = vk::raii::DebugUtilsMessengerEXT(instance_, createInfo);
+            return true;
+        }
+        catch (const std::exception& e) 
+        {
+            Logger::Error("Failed to set up debug messenger: " + std::string(e.what()));
+            return false;
+        }
+    }
+
+    bool Renderer::createSurface() 
+    {
+        try 
+        {
+            // create surface ...
+            VkSurfaceKHR khrSurface;
+            if (!platformWindow_->CreateVulkanSurface(*instance_, &khrSurface)) 
+            {
+                Logger::Error("Failed to create window surface");
+                return false;
+            }
+
+            surface_ = vk::raii::SurfaceKHR(instance_, khrSurface);
+            return true;
+        }
+        catch (const std::exception& e) 
+        {
+            Logger::Error("Failed to create surface: " + std::string(e.what()));
             return false;
         }
     }
