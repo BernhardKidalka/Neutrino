@@ -59,11 +59,12 @@ static VKAPI_ATTR VkBool32 VKAPI_CALL debugCallbackVkRaii(
 
 // cross-platform wrapper that bridges C types to C++ types
 // this function wraps debugCallbackVkRaii to match vk::PFN_DebugUtilsMessengerCallbackEXT signature
+// callback matches vk::PFN_DebugUtilsMessengerCallbackEXT signature exactly
 static VKAPI_ATTR vk::Bool32 VKAPI_CALL debugCallbackWrapper(
     vk::DebugUtilsMessageSeverityFlagBitsEXT messageSeverity,
     [[maybe_unused]] vk::DebugUtilsMessageTypeFlagsEXT messageType,
     const vk::DebugUtilsMessengerCallbackDataEXT* pCallbackData,
-    [[maybe_unused]] void* pUserData) 
+    [[maybe_unused]] void* pUserData)
 {
     // Call the C-style callback with cast parameters
     return static_cast<vk::Bool32>(debugCallbackVkRaii(
@@ -267,7 +268,7 @@ namespace Neutrino
                 .messageType = vk::DebugUtilsMessageTypeFlagBitsEXT::eGeneral |
                     vk::DebugUtilsMessageTypeFlagBitsEXT::eValidation |
                     vk::DebugUtilsMessageTypeFlagBitsEXT::ePerformance,
-                .pfnUserCallback = static_cast<vk::PFN_DebugUtilsMessengerCallbackEXT>(&debugCallbackWrapper)
+                .pfnUserCallback = &debugCallbackWrapper
             };
 
             // create debug messenger
