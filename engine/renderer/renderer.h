@@ -18,7 +18,7 @@
 // Project: Neutrino Engine
 //    File: Neutrino\engine\renderer\renderer.h
 //  Author: B. Kidalka
-//    Date: 2026-08-08
+//    Date: 2026-08-09
 //
 //    Lang: C++
 //
@@ -31,6 +31,7 @@
 
 #include <vector>
 #include <string>
+#include <optional>
 
 #include <vulkan/vk_platform.h>
 #include <vulkan/vulkan_hpp_macros.hpp>
@@ -49,6 +50,26 @@
 
 namespace Neutrino
 {
+    struct QueueFamilyIndices 
+    {
+        std::optional<uint32_t> GraphicsFamily;
+        std::optional<uint32_t> PresentFamily;
+        std::optional<uint32_t> ComputeFamily;
+        std::optional<uint32_t> TransferFamily; // optional dedicated transfer queue family
+
+        [[nodiscard]] bool isComplete() const 
+        {
+            return GraphicsFamily.has_value() && PresentFamily.has_value() && ComputeFamily.has_value();
+        }
+    };
+    
+    struct SwapChainSupportDetails 
+    {
+        vk::SurfaceCapabilitiesKHR Capabilities;
+        std::vector<vk::SurfaceFormatKHR> Formats;
+        std::vector<vk::PresentModeKHR> PresentModes;
+    };
+
     class Renderer
     {
     public:
@@ -71,6 +92,18 @@ namespace Neutrino
         bool setupDebugMessenger(bool enableValidationLayers);
         // create Vulkan surface for rendering
         bool createSurface();
+        // add supported optional device extensions to the list of device extensions
+        void addSupportedOptionalExtensions();
+        // select a suitable physical device (GPU) for rendering
+        bool selectPhysicalDevice();
+
+        // renderer utils ...
+        // find queue family indices for the given physical device
+        QueueFamilyIndices findQueueFamilies(const vk::raii::PhysicalDevice& device);
+        // check if the given physical device supports all required device extensions
+        bool checkDeviceExtensionSupport(vk::raii::PhysicalDevice& device);
+        // query swap chain support details for the given physical device
+        SwapChainSupportDetails querySwapChainSupport(const vk::raii::PhysicalDevice& device);
 
         ///////////////////////////////////////////////////////////////////////////////////////////////
         // consts ...
@@ -128,5 +161,9 @@ namespace Neutrino
         // Vulkan device
         vk::raii::PhysicalDevice physicalDevice_ { nullptr };
         vk::raii::Device device_ { nullptr };
+
+        // queue family indices
+        QueueFamilyIndices queueFamilyIndices_;
+
     };
 }

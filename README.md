@@ -67,7 +67,8 @@ Neutrino/
 │   │    └── window.cpp
 │   └── renderer/
 │        ├── renderer.h
-│        └── renderer_core.cpp
+│        ├── renderer_core.cpp
+│        └── renderer_utils.cpp
 └── src/
     ├── CMakeLists.txt          # Executable configuration
     └── main.cpp

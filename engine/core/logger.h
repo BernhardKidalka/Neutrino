@@ -18,7 +18,7 @@
 // Project: Neutrino Engine
 //    File: Neutrino\engine\core\logger.h
 //  Author: B. Kidalka
-//    Date: 2026-07-26
+//    Date: 2026-08-09
 //
 //    Lang: C++
 //
@@ -39,6 +39,7 @@ namespace Neutrino
         static void Info(const std::string& msg);
         static void Warning(const std::string& msg);
         static void Error(const std::string& msg);
+        static void Flush();
     };
 
 } // namespace Neutrino

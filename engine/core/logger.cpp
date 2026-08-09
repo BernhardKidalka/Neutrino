@@ -18,7 +18,7 @@
 // Project: Neutrino Engine
 //    File: Neutrino\engine\core\logger.cpp
 //  Author: B. Kidalka
-//    Date: 2026-07-26
+//    Date: 2026-08-09
 //
 //    Lang: C++
 //
@@ -51,6 +51,12 @@ namespace Neutrino
     void Logger::Error(const std::string& msg) 
     {
         std::cerr << "[ERROR] " << msg << "\n";
+    }
+
+    void Logger::Flush()
+    {
+        std::flush(std::cout);
+        std::flush(std::cerr);
     }
 
 } // namespace Neutrino
