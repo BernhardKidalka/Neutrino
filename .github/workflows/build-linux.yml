@@ -20,39 +20,25 @@ jobs:
         run: |
           git submodule update --init --recursive
 
-      - name: Download and install Vulkan SDK
+      - name: Install Vulkan SDK dependencies
         run: |
           set -euo pipefail
+          export DEBIAN_FRONTEND=noninteractive
+          sudo apt-get update
           
-          # Use direct CDN download with a stable version
-          SDK_VERSION="1.3.290"
-          SDK_URL="https://sdk.lunarg.com/sdk/download/${SDK_VERSION}/linux/vulkansdk-linux-x86_64-${SDK_VERSION}.tar.gz"
+          # Install dependencies that vulkan-sdk needs
+          sudo apt-get install -y --no-install-recommends \
+            libyaml-cpp0.7 \
+            libyaml-0-2
           
-          echo "Downloading Vulkan SDK ${SDK_VERSION}..."
-          mkdir -p ~/vulkan-sdk
-          cd ~/vulkan-sdk
+          # Add LunarG repository (with key handling for newer Ubuntu)
+          sudo mkdir -p /etc/apt/keyrings
+          wget -qO- https://packages.lunarg.com/lunarg-signing-key-pub.asc | sudo gpg --dearmor -o /etc/apt/keyrings/lunarg-archive-keyring.gpg
+          echo "deb [signed-by=/etc/apt/keyrings/lunarg-archive-keyring.gpg] https://packages.lunarg.com/ubuntu/ jammy main" | sudo tee /etc/apt/sources.list.d/lunarg-vulkan-jammy.list
+          sudo apt-get update
           
-          # Download with verbose output and retry
-          wget --no-verbose --show-progress "$SDK_URL" -O vulkan-sdk.tar.gz || \
-          curl -L --progress-bar "$SDK_URL" -o vulkan-sdk.tar.gz
-          
-          echo "Extracting Vulkan SDK..."
-          tar -xzf vulkan-sdk.tar.gz
-          
-          # Find the extracted SDK directory
-          SDK_DIR=$(ls -d ${PWD}/*/ 2>/dev/null | head -1)
-          if [ -z "$SDK_DIR" ]; then
-            echo "Error: SDK directory not found after extraction"
-            ls -la
-            exit 1
-          fi
-          
-          echo "SDK extracted to: $SDK_DIR"
-          echo "VULKAN_SDK=$SDK_DIR" >> $GITHUB_ENV
-          echo "$SDK_DIR/bin" >> $GITHUB_PATH
-          
-          # Verify key files exist
-          ls -la "$SDK_DIR/include/vulkan/" | head -10
+          # Install vulkan-sdk
+          sudo apt-get install -y --no-install-recommends vulkan-sdk
 
       - name: Install dependencies
         run: |
@@ -88,7 +74,7 @@ jobs:
       - name: Configure CMake
         run: |
           mkdir -p build
-          cmake -S . -B build -DCMAKE_BUILD_TYPE=Release -DVULKAN_SDK=${{ env.VULKAN_SDK }}
+          cmake -S . -B build -DCMAKE_BUILD_TYPE=Release
 
       - name: Build
         run: |
