@@ -20,34 +20,14 @@ jobs:
         run: |
           git submodule update --init --recursive
 
-      - name: Install Vulkan SDK dependencies
-        run: |
-          set -euo pipefail
-          export DEBIAN_FRONTEND=noninteractive
-          sudo apt-get update
-          
-          # Install dependencies that vulkan-sdk needs
-          sudo apt-get install -y --no-install-recommends \
-            libyaml-cpp0.7 \
-            libyaml-0-2
-          
-          # Add LunarG repository (with key handling for newer Ubuntu)
-          sudo mkdir -p /etc/apt/keyrings
-          wget -qO- https://packages.lunarg.com/lunarg-signing-key-pub.asc | sudo gpg --dearmor -o /etc/apt/keyrings/lunarg-archive-keyring.gpg
-          echo "deb [signed-by=/etc/apt/keyrings/lunarg-archive-keyring.gpg] https://packages.lunarg.com/ubuntu/ jammy main" | sudo tee /etc/apt/sources.list.d/lunarg-vulkan-jammy.list
-          sudo apt-get update
-          
-          # Install vulkan-sdk
-          sudo apt-get install -y --no-install-recommends vulkan-sdk
-
-      - name: Install dependencies
+      - name: Install dependencies (robust, ubuntu-friendly)
         run: |
           set -euo pipefail
           export DEBIAN_FRONTEND=noninteractive
           sudo apt-get update
 
           # Base packages required for build and common dev headers
-          PKGS_BASE="libglfw3-dev build-essential cmake pkg-config \
+          PKGS_BASE="vulkan-tools libvulkan-dev libglfw3-dev build-essential cmake pkg-config \
             libxkbcommon-dev libwayland-dev libegl1-mesa-dev libwayland-egl1-mesa libwayland-cursor0 \
             libx11-dev libxrandr-dev libxi-dev libxinerama-dev libxcursor-dev libasound2-dev"
           echo "Installing base packages: $PKGS_BASE"
@@ -67,6 +47,9 @@ jobs:
           if has_candidate vulkan-validationlayers-dev; then
             echo "Installing vulkan-validationlayers-dev"
             sudo apt-get install -y --no-install-recommends vulkan-validationlayers-dev
+          elif has_candidate vulkan-utility-libraries-dev; then
+            echo "Installing vulkan-utility-libraries-dev"
+            sudo apt-get install -y --no-install-recommends vulkan-utility-libraries-dev
           else
             echo "No Vulkan validation/utility package available; continuing without it"
           fi
