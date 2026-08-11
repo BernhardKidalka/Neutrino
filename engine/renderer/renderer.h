@@ -32,6 +32,7 @@
 #include <vector>
 #include <string>
 #include <optional>
+#include <atomic>
 
 #include <vulkan/vk_platform.h>
 #include <vulkan/vulkan_hpp_macros.hpp>

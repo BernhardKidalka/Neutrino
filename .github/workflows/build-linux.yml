@@ -20,6 +20,16 @@ jobs:
         run: |
           git submodule update --init --recursive
 
+      - name: Add LunarG Vulkan SDK repository
+        run: |
+          set -euo pipefail
+          export DEBIAN_FRONTEND=noninteractive
+          
+          # Add LunarG GPG key and repository for latest Vulkan SDK
+          wget -qO - https://packages.lunarg.com/lunarg-signing-key-pub.asc | sudo apt-key add -
+          sudo wget -qO /etc/apt/sources.list.d/lunarg-vulkan-jammy.list https://packages.lunarg.com/vulkan/lunarg-vulkan-jammy.list
+          sudo apt-get update
+
       - name: Install dependencies (robust, ubuntu-friendly)
         run: |
           set -euo pipefail
@@ -27,7 +37,7 @@ jobs:
           sudo apt-get update
 
           # Base packages required for build and common dev headers
-          PKGS_BASE="vulkan-tools libvulkan-dev libglfw3-dev build-essential cmake pkg-config \
+          PKGS_BASE="vulkan-sdk libglfw3-dev build-essential cmake pkg-config \
             libxkbcommon-dev libwayland-dev libegl1-mesa-dev libwayland-egl1-mesa libwayland-cursor0 \
             libx11-dev libxrandr-dev libxi-dev libxinerama-dev libxcursor-dev libasound2-dev"
           echo "Installing base packages: $PKGS_BASE"
