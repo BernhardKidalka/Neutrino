@@ -7,7 +7,7 @@ Neutrino is based on the engine example implementation from the Khronos Vulkan T
 
 ### Note
 
-This repository is for my private education and experiments. It is works in progress and is in a very early state.
+This repository is for my private training and experiments with computer graphics and gpu compute based on the Vulkan API. It is work in progress and is in a very early state. It is a spare time project.
 
 ## Prerequisites
 
