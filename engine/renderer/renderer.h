@@ -18,7 +18,7 @@
 // Project: Neutrino Engine
 //    File: Neutrino\engine\renderer\renderer.h
 //  Author: B. Kidalka
-//    Date: 2026-08-09
+//    Date: 2026-08-11
 //
 //    Lang: C++
 //
@@ -96,6 +96,8 @@ namespace Neutrino
         void addSupportedOptionalExtensions();
         // select a suitable physical device (GPU) for rendering
         bool selectPhysicalDevice();
+        // create a logical device from the selected physical device
+        bool createLogicalDevice();
 
         // renderer utils ...
         // find queue family indices for the given physical device
@@ -148,6 +150,16 @@ namespace Neutrino
         bool    initialized_{ false };
         // flag to control Vulkan validation layers (enabled in debug builds, disabled in release builds)
         bool    enableValidationLayers_{ false };
+        // flag indicating whether the VK_EXT_descriptor_indexing (update-after-bind) path is enabled
+        bool descriptorIndexingEnabled_ { false };
+        bool storageAfterBindEnabled_ { false };
+        // feature toggles detected/enabled at device creation ...
+        bool robustness2Enabled_ { false };
+        bool dynamicRenderingLocalReadEnabled_ { false };
+        bool shaderTileImageEnabled_ { false };
+        bool rayQueryEnabled_ { false };
+        bool accelerationStructureEnabled_ { false };
+
         // all device extensions (required + optional)
         std::vector<const char*> deviceExtensions_;
         
@@ -164,6 +176,16 @@ namespace Neutrino
 
         // queue family indices
         QueueFamilyIndices queueFamilyIndices_;
+        // Vulkan queues ...
+        vk::raii::Queue graphicsQueue_ { nullptr };
+        vk::raii::Queue presentQueue_ { nullptr };
+        vk::raii::Queue computeQueue_ { nullptr };
+        // dedicated transfer queue (falls back to graphics if unavailable)
+        vk::raii::Queue transferQueue_ { nullptr };
 
+        // upload timeline semaphore for transfer -> graphics handoff (signaled per upload)
+        vk::raii::Semaphore uploadsTimeline_ { nullptr };
+        // tracks last timeline value that has been submitted for signaling on uploadsTimeline
+        std::atomic<uint64_t> uploadTimelineLastSubmitted_ { 0 };
     };
 }
