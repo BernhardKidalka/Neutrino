@@ -708,6 +708,7 @@ namespace Neutrino
                 *tailNext = &robust2Enable;
                 tailNext = reinterpret_cast<void**>(&robust2Enable.pNext);
             }
+#ifdef _WIN32            
             if (hasLocalRead) 
             {
                 *tailNext = &localReadEnable;
@@ -718,6 +719,7 @@ namespace Neutrino
                 *tailNext = &tileImageEnable;
                 tailNext = reinterpret_cast<void**>(&tileImageEnable.pNext);
             }
+#endif
             if (hasAccelerationStructure) 
             {
                 *tailNext = &accelerationStructureEnable;
@@ -733,10 +735,12 @@ namespace Neutrino
             robustness2Enabled_ = hasRobust2 && (robust2Enable.robustBufferAccess2 == vk::True ||
                 robust2Enable.robustImageAccess2 == vk::True ||
                 robust2Enable.nullDescriptor == vk::True);
+#ifdef _WIN32            
             dynamicRenderingLocalReadEnabled_ = hasLocalRead && (localReadEnable.dynamicRenderingLocalRead == vk::True);
             shaderTileImageEnabled_ = hasTileImage && (tileImageEnable.shaderTileImageColorReadAccess == vk::True ||
                 tileImageEnable.shaderTileImageDepthReadAccess == vk::True ||
                 tileImageEnable.shaderTileImageStencilReadAccess == vk::True);
+#endif            
             accelerationStructureEnabled_ = hasAccelerationStructure && (accelerationStructureEnable.accelerationStructure == vk::True);
             rayQueryEnabled_ = hasRayQuery && (rayQueryEnable.rayQuery == vk::True);
 
