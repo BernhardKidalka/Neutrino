@@ -666,6 +666,9 @@ namespace Neutrino
                 if (tileImageSupported.shaderTileImageStencilReadAccess)
                     tileImageEnable.shaderTileImageStencilReadAccess = vk::True;
             }
+#else
+            bool hasLocalRead = false;
+            bool hasTileImage = false;
 #endif
 
             // prepare 'Acceleration Structure' features if extension is enabled and supported ...
