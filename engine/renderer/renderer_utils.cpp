@@ -1,5 +1,5 @@
 //------------------------------------------------------------------------------------------------------
-// Copyright (c) 2026 Bernhard Kidalka
+// Copyright (c) 2025 Holochip Corporation
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -15,14 +15,12 @@
 //
 //------------------------------------------------------------------------------------------------------
 //
-// Project: Neutrino Engine
-//    File: Neutrino\engine\renderer\renderer_utils.cpp
-//  Author: B. Kidalka
-//    Date: 2026-08-09
-//
-//    Lang: C++
-//
-// Descrip: Renderer utils implementation.
+// Project       : Neutrino Engine
+// File          : Neutrino\engine\renderer\renderer_utils.cpp
+// Modifications : B. Kidalka
+// Date          : 2026-08-12
+// Language      : C++
+// Description   : Renderer utils implementation.
 //
 //------------------------------------------------------------------------------------------------------
 

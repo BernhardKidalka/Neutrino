@@ -15,14 +15,12 @@
 //
 //------------------------------------------------------------------------------------------------------
 //
-// Project: Neutrino Engine
-//    File: Neutrino\engine\core\logger.cpp
-//  Author: B. Kidalka
-//    Date: 2026-08-09
-//
-//    Lang: C++
-//
-// Descrip: Neutrino Logger class implementation.
+// Project       : Neutrino Engine
+// File          : Neutrino\engine\core\logger.cpp
+// Modifications : B. Kidalka
+// Date          : 2026-08-12
+// Language      : C++
+// Description   : Neutrino Logger class implementation.
 //
 //------------------------------------------------------------------------------------------------------
 

@@ -1,5 +1,5 @@
 //------------------------------------------------------------------------------------------------------
-// Copyright (c) 2026 Bernhard Kidalka
+// Copyright (c) 2025 Holochip Corporation
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -15,14 +15,12 @@
 //
 //------------------------------------------------------------------------------------------------------
 //
-// Project: Neutrino Engine
-//    File: Neutrino\engine\platform\window.h
-//  Author: B. Kidalka
-//    Date: 2026-08-01
-//
-//    Lang: C++
-//
-// Descrip: Platform-specific window declarations.
+// Project       : Neutrino Engine
+// File          : Neutrino\engine\platform\window.h
+// Modifications : B. Kidalka
+// Date          : 2026-08-12
+// Language      : C++
+// Description   : Platform-specific window declarations.
 //
 //------------------------------------------------------------------------------------------------------
 #pragma once
