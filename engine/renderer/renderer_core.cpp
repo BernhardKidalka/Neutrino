@@ -569,7 +569,7 @@ namespace Neutrino
             const auto& localReadSupported = featureChain.get<vk::PhysicalDeviceDynamicRenderingLocalReadFeaturesKHR>();
             const auto& tileImageSupported = featureChain.get<vk::PhysicalDeviceShaderTileImageFeaturesEXT>();
 #else
-            auto featureChain = physicalDevice.getFeatures2<
+            auto featureChain = physicalDevice_.getFeatures2<
                 vk::PhysicalDeviceFeatures2,
                 vk::PhysicalDeviceDescriptorIndexingFeatures,
                 vk::PhysicalDeviceRobustness2FeaturesEXT,
