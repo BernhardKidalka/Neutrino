@@ -18,7 +18,7 @@
 // Project: Neutrino Engine
 //    File: Neutrino\engine\renderer\renderer_core.cpp
 //  Author: B. Kidalka
-//    Date: 2026-08-11
+//    Date: 2026-08-12
 //
 //    Lang: C++
 //
@@ -557,6 +557,7 @@ namespace Neutrino
             vulkan11Features.shaderDrawParameters = vk::True;
             
             // query extended feature support ...
+#ifdef _WIN32            
             auto featureChain = physicalDevice_.getFeatures2<
                 vk::PhysicalDeviceFeatures2,
                 vk::PhysicalDeviceDescriptorIndexingFeatures,
@@ -567,6 +568,14 @@ namespace Neutrino
                 vk::PhysicalDeviceRayQueryFeaturesKHR>();
             const auto& localReadSupported = featureChain.get<vk::PhysicalDeviceDynamicRenderingLocalReadFeaturesKHR>();
             const auto& tileImageSupported = featureChain.get<vk::PhysicalDeviceShaderTileImageFeaturesEXT>();
+#else
+            auto featureChain = physicalDevice.getFeatures2<
+                vk::PhysicalDeviceFeatures2,
+                vk::PhysicalDeviceDescriptorIndexingFeatures,
+                vk::PhysicalDeviceRobustness2FeaturesEXT,
+                vk::PhysicalDeviceAccelerationStructureFeaturesKHR,
+                vk::PhysicalDeviceRayQueryFeaturesKHR>();
+#endif
             const auto& coreFeaturesSupported = featureChain.get<vk::PhysicalDeviceFeatures2>().features;
             const auto& indexingFeaturesSupported = featureChain.get<vk::PhysicalDeviceDescriptorIndexingFeatures>();
             const auto& robust2Supported = featureChain.get<vk::PhysicalDeviceRobustness2FeaturesEXT>();
@@ -636,6 +645,7 @@ namespace Neutrino
                     robust2Enable.nullDescriptor = vk::True;
             }
 
+#ifdef _WIN32            
             // prepare 'Dynamic Rendering Local Read' features if extension is enabled and supported ...
             auto hasLocalRead = hasExtension(VK_KHR_DYNAMIC_RENDERING_LOCAL_READ_EXTENSION_NAME);
             vk::PhysicalDeviceDynamicRenderingLocalReadFeaturesKHR localReadEnable{};
@@ -656,6 +666,7 @@ namespace Neutrino
                 if (tileImageSupported.shaderTileImageStencilReadAccess)
                     tileImageEnable.shaderTileImageStencilReadAccess = vk::True;
             }
+#endif
 
             // prepare 'Acceleration Structure' features if extension is enabled and supported ...
             auto hasAccelerationStructure = hasExtension(VK_KHR_ACCELERATION_STRUCTURE_EXTENSION_NAME);
