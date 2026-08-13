@@ -60,15 +60,18 @@ Neutrino/
 │   │    └── engine.h
 │   ├── core/
 │   │    ├── engine.cpp
-│   │    ├── logger.h
-│   │    └── logger.cpp
+│   │    ├── logger.cpp
+│   │    └── logger.h
 │   ├── platform/
-│   │    ├── window.h
-│   │    └── window.cpp
-│   └── renderer/
-│        ├── renderer.h
-│        ├── renderer_core.cpp
-│        └── renderer_utils.cpp
+│   │    ├── window.cpp
+│   │    └── window.h
+│   ├── renderer/
+│   │    ├── renderer.h
+│   │    ├── renderer_core.cpp
+│   │    └── renderer_utils.cpp
+│   └── resources/
+│        ├── memory_pool.cpp
+│        └── memory_pool.h
 └── src/
     ├── CMakeLists.txt          # Executable configuration
     └── main.cpp
