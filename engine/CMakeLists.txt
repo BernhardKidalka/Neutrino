@@ -22,6 +22,7 @@ add_library(NeutrinoEngine SHARED
 	platform/window.cpp
 	renderer/renderer_core.cpp
 	renderer/renderer_utils.cpp
+	resources/memory_pool.cpp
 )
 
 # Header files

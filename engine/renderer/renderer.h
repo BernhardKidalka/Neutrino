@@ -18,7 +18,7 @@
 // Project       : Neutrino Engine
 // File          : Neutrino\engine\renderer\renderer.h
 // Modifications : B. Kidalka
-// Date          : 2026-08-12
+// Date          : 2026-08-13
 // Language      : C++
 // Description   : Renderer declarations.
 //
@@ -31,9 +31,9 @@
 #include <string>
 #include <optional>
 #include <atomic>
+#include <memory>
 
 #include <vulkan/vk_platform.h>
-#include <vulkan/vulkan_hpp_macros.hpp>
 #include <vulkan/vulkan_raii.hpp>
 
 // fallback defines for optional extension names (allow compiling against older headers)
@@ -49,6 +49,8 @@
 
 namespace Neutrino
 {
+    class MemoryPool;
+
     struct QueueFamilyIndices 
     {
         std::optional<uint32_t> GraphicsFamily;
@@ -68,7 +70,7 @@ namespace Neutrino
         std::vector<vk::SurfaceFormatKHR> Formats;
         std::vector<vk::PresentModeKHR> PresentModes;
     };
-
+    
     class Renderer
     {
     public:
@@ -172,6 +174,8 @@ namespace Neutrino
         // Vulkan device
         vk::raii::PhysicalDevice physicalDevice_ { nullptr };
         vk::raii::Device device_ { nullptr };
+        // memory pool for efficient memory management
+        std::unique_ptr<MemoryPool> memoryPool_ { nullptr };
 
         // queue family indices
         QueueFamilyIndices queueFamilyIndices_;

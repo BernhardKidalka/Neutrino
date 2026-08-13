@@ -18,7 +18,7 @@
 // Project       : Neutrino Engine
 // File          : Neutrino\engine\renderer\renderer_core.cpp
 // Modifications : B. Kidalka
-// Date          : 2026-08-12
+// Date          : 2026-08-13
 // Language      : C++
 // Description   : Renderer core implementation.
 //
@@ -26,6 +26,7 @@
 
 #include "renderer.h"
 #include "../core/logger.h"
+#include "../resources/memory_pool.h"
 
 #include <map>
 #include <set>
@@ -127,6 +128,22 @@ namespace Neutrino
         if (!createLogicalDevice()) 
         {
             Logger::Error("Failed to create logical device");
+            return false;
+        }
+        
+        // initialize memory pool for efficient memory management
+        try 
+        {
+            memoryPool_ = std::make_unique<MemoryPool>(device_, physicalDevice_);
+            if (!memoryPool_->Initialize())
+            {
+                Logger::Error("Failed to initialize memory pool");
+                return false;
+            }
+        }
+        catch (const std::exception& e) 
+        {
+            Logger::Error("Failed to create memory pool: " + std::string(e.what()));
             return false;
         }
 
