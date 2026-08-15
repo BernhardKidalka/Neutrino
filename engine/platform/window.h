@@ -18,7 +18,7 @@
 // Project       : Neutrino Engine
 // File          : Neutrino\engine\platform\window.h
 // Modifications : B. Kidalka
-// Date          : 2026-08-12
+// Date          : 2026-08-15
 // Language      : C++
 // Description   : Platform-specific window declarations.
 //
@@ -64,6 +64,13 @@ namespace Neutrino
 
         // get the window height in pixels
         [[nodiscard]] int GetWindowHeight() const { return desc_.Height; }
+
+        // get the window size in pixels
+        void GetWindowSize(int* width, int* height) const 
+        {
+            *width = GetWindowWidth();
+            *height = GetWindowHeight();
+        }
 
         // create a Vulkan surface for rendering
         bool CreateVulkanSurface(VkInstance instance, VkSurfaceKHR* surface);

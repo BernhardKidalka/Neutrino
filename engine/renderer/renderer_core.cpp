@@ -146,6 +146,13 @@ namespace Neutrino
             Logger::Error("Failed to create memory pool: " + std::string(e.what()));
             return false;
         }
+        
+        // create swap chain
+        if (!createSwapChain()) 
+        {
+            Logger::Error("Failed to create swap chain");
+            return false;
+        }
 
         initialized_ = true;
         Logger::Info("Renderer initialized successfully.");
@@ -160,7 +167,18 @@ namespace Neutrino
         }
 
         Logger::Info("Starting renderer shutdown ...");
+        
+        // wait for the device to be idle before cleaning up
+        try 
+        {
+            WaitIdle();
+        }
+        catch (...) 
+        {
+        }
 
+        // clean up any swap chain scoped resources first
+        cleanupSwapChain();
 
         Logger::Info("Renderer shutdown completed.");
         initialized_ = false;

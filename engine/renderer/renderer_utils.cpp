@@ -18,7 +18,7 @@
 // Project       : Neutrino Engine
 // File          : Neutrino\engine\renderer\renderer_utils.cpp
 // Modifications : B. Kidalka
-// Date          : 2026-08-12
+// Date          : 2026-08-15
 // Language      : C++
 // Description   : Renderer utils implementation.
 //
@@ -31,6 +31,11 @@
 
 namespace Neutrino
 {
+    void Renderer::WaitIdle() 
+    {
+        device_.waitIdle();
+    }
+
     QueueFamilyIndices Renderer::findQueueFamilies(const vk::raii::PhysicalDevice& device) 
     {
         QueueFamilyIndices indices;
@@ -122,6 +127,68 @@ namespace Neutrino
         details.PresentModes = device.getSurfacePresentModesKHR(*surface_);
 
         return details;
+    }
+    
+    vk::SurfaceFormatKHR Renderer::chooseSwapSurfaceFormat(const std::vector<vk::SurfaceFormatKHR>& availableFormats) 
+    {
+        // look for SRGB format ...
+        for (const auto& availableFormat : availableFormats) 
+        {
+            if (availableFormat.format == vk::Format::eB8G8R8A8Srgb && availableFormat.colorSpace == vk::ColorSpaceKHR::eSrgbNonlinear) 
+            {
+                return availableFormat;
+            }
+        }
+        // if not found, return first available format
+        return availableFormats[0];
+    }
+    
+    vk::PresentModeKHR Renderer::chooseSwapPresentMode(const std::vector<vk::PresentModeKHR>& availablePresentModes) 
+    {
+        // look for mailbox mode (triple buffering) ...
+        for (const auto& availablePresentMode : availablePresentModes) 
+        {
+            if (availablePresentMode == vk::PresentModeKHR::eMailbox) 
+            {
+                return availablePresentMode;
+            }
+        }
+        // if not found, return FIFO mode (guaranteed to be available on every platform)
+        return vk::PresentModeKHR::eFifo;
+    }
+    
+    vk::Extent2D Renderer::chooseSwapExtent(const vk::SurfaceCapabilitiesKHR& capabilities) 
+    {
+        if (capabilities.currentExtent.width != std::numeric_limits<uint32_t>::max()) 
+        {
+            Logger::Info("Renderer: Using surface currentExtent: " 
+                + std::to_string(capabilities.currentExtent.width) + " x " 
+                + std::to_string(capabilities.currentExtent.height));
+            return capabilities.currentExtent;
+        }
+        else 
+        {
+            // get framebuffer size
+            int width, height;
+            platformWindow_->GetWindowSize(&width, &height);
+
+            Logger::Info("Renderer: surface extent is undefined. Using platform window size: " + std::to_string(width) + " x " + std::to_string(height));
+
+            // create extent
+            vk::Extent2D actualExtent = 
+            {
+              static_cast<uint32_t>(width),
+              static_cast<uint32_t>(height)
+            };
+
+            // clamp to min/max extent ...
+            actualExtent.width = std::clamp(actualExtent.width, capabilities.minImageExtent.width, capabilities.maxImageExtent.width);
+            actualExtent.height = std::clamp(actualExtent.height, capabilities.minImageExtent.height, capabilities.maxImageExtent.height);
+
+            Logger::Info("Renderer: Clamped extent: " + std::to_string(actualExtent.width) + " x " + std::to_string(actualExtent.height));
+
+            return actualExtent;
+        }
     }
 
 }

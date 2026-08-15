@@ -18,7 +18,7 @@
 // Project       : Neutrino Engine
 // File          : Neutrino\engine\renderer\renderer.h
 // Modifications : B. Kidalka
-// Date          : 2026-08-13
+// Date          : 2026-08-15
 // Language      : C++
 // Description   : Renderer declarations.
 //
@@ -80,6 +80,7 @@ namespace Neutrino
         bool Initialize(const std::string& appName);
         void Shutdown();
         void RenderFrame();
+        void WaitIdle();
 
     private:
         ///////////////////////////////////////////////////////////////////////////////////////////////
@@ -99,6 +100,10 @@ namespace Neutrino
         bool selectPhysicalDevice();
         // create a logical device from the selected physical device
         bool createLogicalDevice();
+        // create a swap chain for presenting rendered images to the surface
+        bool createSwapChain();
+        // cleanup and destroy the swap chain and its associated resources
+        void cleanupSwapChain();
 
         // renderer utils ...
         // find queue family indices for the given physical device
@@ -107,6 +112,12 @@ namespace Neutrino
         bool checkDeviceExtensionSupport(vk::raii::PhysicalDevice& device);
         // query swap chain support details for the given physical device
         SwapChainSupportDetails querySwapChainSupport(const vk::raii::PhysicalDevice& device);
+        // choose the best swap chain surface format from the available formats
+        vk::SurfaceFormatKHR chooseSwapSurfaceFormat(const std::vector<vk::SurfaceFormatKHR>& availableFormats);
+        // choose the best swap chain present mode from the available present modes
+        vk::PresentModeKHR chooseSwapPresentMode(const std::vector<vk::PresentModeKHR>& availablePresentModes);
+        // choose the best swap chain extent (resolution) based on the surface capabilities
+        vk::Extent2D chooseSwapExtent(const vk::SurfaceCapabilitiesKHR& capabilities);
 
         ///////////////////////////////////////////////////////////////////////////////////////////////
         // consts ...
@@ -169,8 +180,18 @@ namespace Neutrino
         // Vulkan instance and debug messenger
         vk::raii::Instance instance_ { nullptr };
         vk::raii::DebugUtilsMessengerEXT debugMessenger_ { nullptr };
+        
         // Vulkan surface
         vk::raii::SurfaceKHR surface_ = nullptr;
+        // swap chain and images related ...
+        vk::raii::SwapchainKHR swapChain_ = nullptr;
+        std::vector<vk::Image> swapChainImages_;
+        std::vector<vk::raii::ImageView> swapChainImageViews_;
+        vk::Format swapChainImageFormat_ { vk::Format::eUndefined };
+        vk::Extent2D swapChainExtent_ = { 0, 0 };
+        // tracked layouts for swap chain images, initialized at swap chain creation and updated as we transition
+        std::vector<vk::ImageLayout> swapChainImageLayouts_;
+        
         // Vulkan device
         vk::raii::PhysicalDevice physicalDevice_ { nullptr };
         vk::raii::Device device_ { nullptr };
