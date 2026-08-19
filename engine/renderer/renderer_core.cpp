@@ -166,6 +166,13 @@ namespace Neutrino
             Logger::Error("Failed to setup dynamic rendering");
             return false;
         }
+        
+        // create the descriptor set layout
+        if (!createDescriptorSetLayout()) 
+        {
+            Logger::Error("Failed to create descriptor set layout");
+            return false;
+        }
 
         initialized_ = true;
         Logger::Info("Renderer initialized successfully.");

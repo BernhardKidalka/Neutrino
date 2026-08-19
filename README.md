@@ -69,6 +69,7 @@ Neutrino/
 │   │    ├── renderer.cpp
 │   │    ├── renderer.h
 │   │    ├── renderer_core.cpp
+│   │    ├── renderer_pipelines.cpp
 │   │    └── renderer_utils.cpp
 │   └── resources/
 │        ├── memory_pool.cpp

@@ -22,6 +22,7 @@ add_library(NeutrinoEngine SHARED
 	platform/window.cpp
 	renderer/renderer_core.cpp
 	renderer/renderer_utils.cpp
+	renderer/renderer_pipelines.cpp
 	renderer/renderer.cpp
 	resources/memory_pool.cpp
 )

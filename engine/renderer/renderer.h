@@ -109,6 +109,8 @@ namespace Neutrino
         bool createImageViews();
         // setup dynamic rendering
         bool setupDynamicRendering();
+        // create descriptor set layout for resource bindings
+        bool createDescriptorSetLayout();
 
         // renderer utils ...
         // find queue family indices for the given physical device
@@ -169,6 +171,8 @@ namespace Neutrino
         bool    enableValidationLayers_{ false };
         // flag indicating whether the VK_EXT_descriptor_indexing (update-after-bind) path is enabled
         bool descriptorIndexingEnabled_ { false };
+        bool descriptorBindingUniformBufferUpdateAfterBindEnabled_ { false };
+        bool descriptorBindingSampledImageUpdateAfterBindEnabled_ { false };
         bool storageAfterBindEnabled_ { false };
         // feature toggles detected/enabled at device creation ...
         bool robustness2Enabled_ { false };
@@ -232,6 +236,9 @@ namespace Neutrino
         vk::RenderingInfo dynamicRenderingInfo_;
         std::vector<vk::RenderingAttachmentInfo> colorAttachments_;
         vk::RenderingAttachmentInfo depthAttachment_;
+        
+        // descriptor set layouts (declared before pools and sets)
+        vk::raii::DescriptorSetLayout descriptorSetLayout_ { nullptr };
 
     };
 }

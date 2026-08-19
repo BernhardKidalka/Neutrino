@@ -18,14 +18,14 @@
 // Project       : Neutrino Engine
 // File          : Neutrino\engine\renderer\renderer_utils.cpp
 // Modifications : B. Kidalka
-// Date          : 2026-08-15
+// Date          : 2026-08-19
 // Language      : C++
 // Description   : Renderer utils implementation.
 //
 //------------------------------------------------------------------------------------------------------
 
 #include "renderer.h"
-#include "core/logger.h"
+#include "../core/logger.h"
 
 #include <set>
 
