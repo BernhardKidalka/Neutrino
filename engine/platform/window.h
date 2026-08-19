@@ -18,7 +18,7 @@
 // Project       : Neutrino Engine
 // File          : Neutrino\engine\platform\window.h
 // Modifications : B. Kidalka
-// Date          : 2026-08-15
+// Date          : 2026-08-19
 // Language      : C++
 // Description   : Platform-specific window declarations.
 //
@@ -86,7 +86,8 @@ namespace Neutrino
 
         // set callback function for character input events
         void SetCharCallback(std::function<void(uint32_t)> callback);
-
+        // get the current window title
+        std::string GetWindowTitle() const;
         // set the window title
         void SetWindowTitle(const std::string& title);
 

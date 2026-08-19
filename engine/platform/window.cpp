@@ -18,7 +18,7 @@
 // Project       : Neutrino Engine
 // File          : Neutrino\engine\platform\window.cpp
 // Modifications : B. Kidalka
-// Date          : 2026-08-12
+// Date          : 2026-08-19
 // Language      : C++
 // Description   : Platform-specific window implementation.
 //
@@ -120,6 +120,11 @@ namespace Neutrino
         characterCallback = std::move(callback);
     }
 
+    std::string Window::GetWindowTitle() const
+    {
+        return std::string(glfwGetWindowTitle(window_));
+    }
+    
     void Window::SetWindowTitle(const std::string& title) 
     {
         if (window_) 

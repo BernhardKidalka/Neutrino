@@ -18,7 +18,7 @@
 // Project       : Neutrino Engine
 // File          : Neutrino\engine\renderer\renderer.h
 // Modifications : B. Kidalka
-// Date          : 2026-08-15
+// Date          : 2026-08-19
 // Language      : C++
 // Description   : Renderer declarations.
 //
@@ -195,6 +195,8 @@ namespace Neutrino
         // Vulkan device
         vk::raii::PhysicalDevice physicalDevice_ { nullptr };
         vk::raii::Device device_ { nullptr };
+        // name of the selected physical device
+        std::string renderDeviceName_;
         // memory pool for efficient memory management
         std::unique_ptr<MemoryPool> memoryPool_ { nullptr };
 

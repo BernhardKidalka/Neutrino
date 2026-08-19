@@ -18,7 +18,7 @@
 // Project       : Neutrino Engine
 // File          : Neutrino\engine\renderer\renderer_core.cpp
 // Modifications : B. Kidalka
-// Date          : 2026-08-13
+// Date          : 2026-08-19
 // Language      : C++
 // Description   : Renderer core implementation.
 //
@@ -477,7 +477,9 @@ namespace Neutrino
                 // select the device with the highest score (discrete GPU with most VRAM)
                 physicalDevice_ = suitableDevices.rbegin()->second;
                 vk::PhysicalDeviceProperties deviceProperties = physicalDevice_.getProperties();
-                Logger::Info("Selected device: " + std::string((const char*)deviceProperties.deviceName)
+                renderDeviceName_ = std::string((const char*)deviceProperties.deviceName);
+
+                Logger::Info("Selected device: " + renderDeviceName_
                     + " (Type: " + vk::to_string(deviceProperties.deviceType)
                     + ", Score: " + std::to_string(suitableDevices.rbegin()->first) + ")");
 
@@ -486,6 +488,10 @@ namespace Neutrino
 
                 // add supported optional extensions
                 addSupportedOptionalExtensions();
+
+                // extend the window title to include the selected render device name
+                std::string newTitle = platformWindow_->GetWindowTitle() + " - Render Device: " + renderDeviceName_;
+                platformWindow_->SetWindowTitle(newTitle);
 
                 return true;
             }
