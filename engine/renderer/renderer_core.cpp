@@ -26,7 +26,6 @@
 
 #include "renderer.h"
 #include "../core/logger.h"
-#include "../resources/memory_pool.h"
 
 #include <map>
 #include <set>
@@ -151,6 +150,20 @@ namespace Neutrino
         if (!createSwapChain()) 
         {
             Logger::Error("Failed to create swap chain");
+            return false;
+        }
+
+        // create image views
+        if (!createImageViews()) 
+        {
+            Logger::Error("Failed to create image views");
+            return false;
+        }
+
+        // setup dynamic rendering
+        if (!setupDynamicRendering()) 
+        {
+            Logger::Error("Failed to setup dynamic rendering");
             return false;
         }
 

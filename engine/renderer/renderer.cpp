@@ -18,7 +18,7 @@
 // Project       : Neutrino Engine
 // File          : Neutrino\engine\renderer\renderer.cpp
 // Modifications : B. Kidalka
-// Date          : 2026-08-15
+// Date          : 2026-08-19
 // Language      : C++
 // Description   : Renderer implementation.
 //
@@ -126,6 +126,92 @@ namespace Neutrino
         swapChainImageViews_.clear();
         // clean up swap chain
         swapChain_ = vk::raii::SwapchainKHR(nullptr);
+    }
+    
+    bool Renderer::createImageViews() 
+    {
+        try 
+        {
+            opaqueSceneColorImages_.clear();
+            opaqueSceneColorImageAllocations_.clear();
+            opaqueSceneColorImageViews_.clear();
+            opaqueSceneColorImageLayouts_.clear();
+            opaqueSceneColorSampler_ = nullptr;
+            
+            // resize image views vector
+            swapChainImageViews_.clear();
+            swapChainImageViews_.reserve(swapChainImages_.size());
+
+            // create image view info ...
+            vk::ImageViewCreateInfo createInfo
+            {
+                .viewType = vk::ImageViewType::e2D,
+                .format = swapChainImageFormat_,
+                .components = 
+                {
+                    .r = vk::ComponentSwizzle::eIdentity,
+                    .g = vk::ComponentSwizzle::eIdentity,
+                    .b = vk::ComponentSwizzle::eIdentity,
+                    .a = vk::ComponentSwizzle::eIdentity
+                },
+                .subresourceRange = 
+                {
+                    .aspectMask = vk::ImageAspectFlagBits::eColor, 
+                    .baseMipLevel = 0, 
+                    .levelCount = 1, 
+                    .baseArrayLayer = 0, 
+                    .layerCount = 1
+                }
+            };
+
+            // create image view for each swap chain image ...
+            for (const auto& image : swapChainImages_) 
+            {
+                createInfo.image = image;
+                swapChainImageViews_.emplace_back(device_, createInfo);
+            }
+
+            return true;
+        }
+        catch (const std::exception& e) 
+        {
+            Logger::Error("Failed to create image views: " + std::string(e.what()));
+            return false;
+        }
+    }
+
+    bool Renderer::setupDynamicRendering() 
+    {
+        try 
+        {
+            // create color attachment ...
+            vk::RenderingAttachmentInfo colorAttach;
+            colorAttach.imageLayout = vk::ImageLayout::eColorAttachmentOptimal;
+            colorAttach.loadOp = vk::AttachmentLoadOp::eClear;
+            colorAttach.storeOp = vk::AttachmentStoreOp::eStore;
+            colorAttach.clearValue.color = vk::ClearColorValue(std::array<float, 4>{ 0.0f, 0.0f, 0.0f, 1.0f });
+            colorAttachments_ = { colorAttach };
+
+            // create depth attachment ...
+            depthAttachment_.imageLayout = vk::ImageLayout::eDepthStencilAttachmentOptimal;
+            depthAttachment_.loadOp = vk::AttachmentLoadOp::eClear;
+            depthAttachment_.storeOp = vk::AttachmentStoreOp::eStore;
+            depthAttachment_.clearValue.depthStencil = vk::ClearDepthStencilValue{1.0f, 0};
+
+            // create rendering info ...
+            dynamicRenderingInfo_.renderArea = vk::Rect2D(vk::Offset2D(0, 0), swapChainExtent_);
+            dynamicRenderingInfo_.layerCount = 1;
+            dynamicRenderingInfo_.colorAttachmentCount = static_cast<uint32_t>(colorAttachments_.size());
+            dynamicRenderingInfo_.pColorAttachments = colorAttachments_.data();
+            dynamicRenderingInfo_.pDepthAttachment = &depthAttachment_;
+
+            return true;
+        }
+        catch (const std::exception& e) 
+        {
+            Logger::Error("Failed to setup dynamic rendering: " + std::string(e.what()));
+            return false;
+        }
     }
 
 }

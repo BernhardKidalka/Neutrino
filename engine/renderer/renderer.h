@@ -26,6 +26,7 @@
 #pragma once
 
 #include "../platform/window.h"
+#include "../resources/memory_pool.h"
 
 #include <vector>
 #include <string>
@@ -34,6 +35,7 @@
 #include <memory>
 
 #include <vulkan/vk_platform.h>
+#include <vulkan/vulkan_hpp_macros.hpp>
 #include <vulkan/vulkan_raii.hpp>
 
 // fallback defines for optional extension names (allow compiling against older headers)
@@ -49,7 +51,6 @@
 
 namespace Neutrino
 {
-    class MemoryPool;
 
     struct QueueFamilyIndices 
     {
@@ -104,6 +105,10 @@ namespace Neutrino
         bool createSwapChain();
         // cleanup and destroy the swap chain and its associated resources
         void cleanupSwapChain();
+        // create image views for the swap chain images
+        bool createImageViews();
+        // setup dynamic rendering
+        bool setupDynamicRendering();
 
         // renderer utils ...
         // find queue family indices for the given physical device
@@ -213,5 +218,20 @@ namespace Neutrino
         vk::raii::Semaphore uploadsTimeline_ { nullptr };
         // tracks last timeline value that has been submitted for signaling on uploadsTimeline
         std::atomic<uint64_t> uploadTimelineLastSubmitted_ { 0 };
+
+        // the texture that will hold a snapshot of the opaque scene
+        // one off-screen color image per frame-in-flight to avoid cross-frame read/write hazards
+        std::vector<vk::raii::Image> opaqueSceneColorImages_;
+        std::vector<std::unique_ptr<MemoryPool::Allocation>> opaqueSceneColorImageAllocations_;
+        std::vector<vk::raii::ImageView> opaqueSceneColorImageViews_;
+        // track the current layout per frame (initialized to eUndefined at creation)
+        std::vector<vk::ImageLayout> opaqueSceneColorImageLayouts_;
+        vk::raii::Sampler opaqueSceneColorSampler_{ nullptr };
+        
+        // dynamic rendering setup ...
+        vk::RenderingInfo dynamicRenderingInfo_;
+        std::vector<vk::RenderingAttachmentInfo> colorAttachments_;
+        vk::RenderingAttachmentInfo depthAttachment_;
+
     };
 }
