@@ -1109,29 +1109,6 @@ namespace Neutrino
                 tailNext = reinterpret_cast<void**>(&rayQueryFeaturesEnable.pNext);
             }
 
-            // opacity micromap - VK_KHR_opacity_micromap
-            // also requires VK_KHR_device_address_commands for vkCreateAccelerationStructure2KHR
-            auto hasOpacityMicromap = hasExtension(VK_KHR_OPACITY_MICROMAP_EXTENSION_NAME)
-                && hasExtension(VK_KHR_DEVICE_ADDRESS_COMMANDS_EXTENSION_NAME);
-            vk::PhysicalDeviceOpacityMicromapFeaturesKHR opacityMicromapSupported{};
-            vk::PhysicalDeviceOpacityMicromapFeaturesKHR opacityMicromapEnable{};
-            if (hasOpacityMicromap) 
-            {
-                auto featChain2 = physicalDevice_.getFeatures2<
-                    vk::PhysicalDeviceFeatures2,
-                    vk::PhysicalDeviceOpacityMicromapFeaturesKHR>();
-                opacityMicromapSupported = featChain2.template get<vk::PhysicalDeviceOpacityMicromapFeaturesKHR>();
-                if (opacityMicromapSupported.micromap) 
-                {
-                    opacityMicromapEnable.micromap = vk::True;
-#ifdef ENABLE_OPACITY_MICROMAPS
-                    opacityMicromapEnabled_ = true;
-#endif
-                    *tailNext = &opacityMicromapEnable;
-                    tailNext = reinterpret_cast<void**>(&opacityMicromapEnable.pNext);
-                }
-            }
-
             // record which features ended up enabled (for runtime decisions/diagnostics) ...
             robustness2Enabled_ = hasRobust2 && (robust2Enable.robustBufferAccess2 == vk::True ||
                 robust2Enable.robustImageAccess2 == vk::True ||

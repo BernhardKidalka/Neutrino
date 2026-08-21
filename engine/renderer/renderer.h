@@ -49,12 +49,6 @@
 #	define VK_EXT_SHADER_TILE_IMAGE_EXTENSION_NAME "VK_EXT_shader_tile_image"
 #endif
 
-// opacity Micromap fallback (KHR vs EXT)
-#ifndef VK_KHR_OPACITY_MICROMAP_EXTENSION_NAME
-#	define VK_KHR_OPACITY_MICROMAP_EXTENSION_NAME "VK_KHR_opacity_micromap"
-#endif
-
-
 namespace Neutrino
 {
 
@@ -187,9 +181,6 @@ namespace Neutrino
         bool shaderTileImageEnabled_ { false };
         bool rayQueryEnabled_ { false };
         bool accelerationStructureEnabled_ { false };
-#ifdef ENABLE_OPACITY_MICROMAPS
-        bool opacityMicromapEnabled_ = false; // VK_KHR_opacity_micromap
-#endif
 
         // all device extensions (required + optional)
         std::vector<const char*> deviceExtensions_;
