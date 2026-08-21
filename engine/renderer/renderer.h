@@ -18,7 +18,7 @@
 // Project       : Neutrino Engine
 // File          : Neutrino\engine\renderer\renderer.h
 // Modifications : B. Kidalka
-// Date          : 2026-08-19
+// Date          : 2026-08-21
 // Language      : C++
 // Description   : Renderer declarations.
 //
@@ -100,6 +100,7 @@ namespace Neutrino
         // select a suitable physical device (GPU) for rendering
         bool selectPhysicalDevice();
         // create a logical device from the selected physical device
+        bool createLogicalDevice_v1();
         bool createLogicalDevice();
         // create a swap chain for presenting rendered images to the surface
         bool createSwapChain();
@@ -180,6 +181,9 @@ namespace Neutrino
         bool shaderTileImageEnabled_ { false };
         bool rayQueryEnabled_ { false };
         bool accelerationStructureEnabled_ { false };
+#ifdef ENABLE_OPACITY_MICROMAPS
+        bool opacityMicromapEnabled_ = false; // VK_KHR_opacity_micromap
+#endif
 
         // all device extensions (required + optional)
         std::vector<const char*> deviceExtensions_;

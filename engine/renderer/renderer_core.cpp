@@ -18,7 +18,7 @@
 // Project       : Neutrino Engine
 // File          : Neutrino\engine\renderer\renderer_core.cpp
 // Modifications : B. Kidalka
-// Date          : 2026-08-19
+// Date          : 2026-08-21
 // Language      : C++
 // Description   : Renderer core implementation.
 //
@@ -297,6 +297,9 @@ namespace Neutrino
             // finally create Vulkan instance
             instance_ = vk::raii::Instance(context_, instanceInfo);
             
+            // initialize the dispatcher with the instance to load instance-level functions
+            VULKAN_HPP_DEFAULT_DISPATCHER.init(*instance_);
+
             return true;
         }
         catch (const std::exception& e) 
@@ -525,7 +528,7 @@ namespace Neutrino
         }
     }
 
-    bool Renderer::createLogicalDevice() 
+    bool Renderer::createLogicalDevice_v1() 
     {
         try 
         {
@@ -843,6 +846,327 @@ namespace Neutrino
                 {},
                 { .semaphoreType = vk::SemaphoreType::eTimeline, .initialValue = 0 }
             );
+            uploadsTimeline_ = vk::raii::Semaphore(device_, timelineChain.get<vk::SemaphoreCreateInfo>());
+            uploadTimelineLastSubmitted_.store(0, std::memory_order_relaxed);
+
+            return true;
+        }
+        catch (const std::exception& e) 
+        {
+            Logger::Error("Failed to create logical device: " + std::string(e.what()));
+            return false;
+        }
+    }
+    
+    bool Renderer::createLogicalDevice()
+    {
+        try 
+        {
+            // create device queue create info for each unique queue family ...
+            std::vector<vk::DeviceQueueCreateInfo> queueCreateInfos;
+            std::set uniqueQueueFamilies = 
+            {
+              queueFamilyIndices_.GraphicsFamily.value(),
+              queueFamilyIndices_.PresentFamily.value(),
+              queueFamilyIndices_.ComputeFamily.value(),
+              queueFamilyIndices_.TransferFamily.value()
+            };
+
+            float queuePriority = 1.0f;
+            for (uint32_t queueFamily : uniqueQueueFamilies) 
+            {
+                vk::DeviceQueueCreateInfo queueCreateInfo
+                {
+                    .queueFamilyIndex = queueFamily,
+                    .queueCount = 1,
+                    .pQueuePriorities = &queuePriority
+                };
+                queueCreateInfos.push_back(queueCreateInfo);
+            }
+
+            // query supported features before enabling them ...
+            auto featureChainSupported = physicalDevice_.getFeatures2<
+                vk::PhysicalDeviceFeatures2,
+                vk::PhysicalDeviceTimelineSemaphoreFeatures,
+                vk::PhysicalDeviceVulkanMemoryModelFeatures,
+                vk::PhysicalDeviceBufferDeviceAddressFeatures,
+                vk::PhysicalDevice8BitStorageFeatures,
+                vk::PhysicalDeviceVulkan11Features,
+                vk::PhysicalDeviceVulkan12Features,
+                vk::PhysicalDeviceVulkan13Features,
+                vk::PhysicalDeviceDescriptorIndexingFeatures,
+                vk::PhysicalDeviceRobustness2FeaturesEXT,
+                vk::PhysicalDeviceDynamicRenderingLocalReadFeaturesKHR,
+                vk::PhysicalDeviceShaderTileImageFeaturesEXT,
+                vk::PhysicalDeviceAccelerationStructureFeaturesKHR,
+                vk::PhysicalDeviceRayQueryFeaturesKHR>();
+
+            // extract supported feature structs ...
+            const auto& coreSupported = featureChainSupported.get<vk::PhysicalDeviceFeatures2>().features;
+            const auto& timelineSupported = featureChainSupported.get<vk::PhysicalDeviceTimelineSemaphoreFeatures>();
+            const auto& memoryModelSupported = featureChainSupported.get<vk::PhysicalDeviceVulkanMemoryModelFeatures>();
+            const auto& bufferAddressSupported = featureChainSupported.get<vk::PhysicalDeviceBufferDeviceAddressFeatures>();
+            const auto& storage8BitSupported = featureChainSupported.get<vk::PhysicalDevice8BitStorageFeatures>();
+            const auto& vulkan11Supported = featureChainSupported.get<vk::PhysicalDeviceVulkan11Features>();
+            const auto& vulkan13Supported = featureChainSupported.get<vk::PhysicalDeviceVulkan13Features>();
+            const auto& indexingFeaturesSupported = featureChainSupported.get<vk::PhysicalDeviceDescriptorIndexingFeatures>();
+            const auto& robust2Supported = featureChainSupported.get<vk::PhysicalDeviceRobustness2FeaturesEXT>();
+            const auto& localReadSupported = featureChainSupported.get<vk::PhysicalDeviceDynamicRenderingLocalReadFeaturesKHR>();
+            const auto& tileImageSupported = featureChainSupported.get<vk::PhysicalDeviceShaderTileImageFeaturesEXT>();
+            const auto& accelerationStructureSupported = featureChainSupported.get<vk::PhysicalDeviceAccelerationStructureFeaturesKHR>();
+            const auto& rayQuerySupported = featureChainSupported.get<vk::PhysicalDeviceRayQueryFeaturesKHR>();
+
+            // verify that critical features are supported ...
+            if (!coreSupported.samplerAnisotropy)
+            {
+                Logger::Warning("Missing feature: samplerAnisotropy");
+            }
+            if (!timelineSupported.timelineSemaphore)
+            {
+                Logger::Warning("Missing feature: timelineSemaphore");
+            }
+            if (!memoryModelSupported.vulkanMemoryModel)
+            {
+                Logger::Warning("Missing feature: vulkanMemoryModel");
+            }
+            if (!bufferAddressSupported.bufferDeviceAddress)
+            {
+                Logger::Warning("Missing feature: bufferDeviceAddress");
+            }
+            if (!vulkan13Supported.dynamicRendering)
+            {
+                Logger::Warning("Missing feature: dynamicRendering");
+            }
+            if (!vulkan13Supported.synchronization2)
+            {
+                Logger::Warning("Missing feature: synchronization2");
+            }
+
+            if (!coreSupported.samplerAnisotropy ||
+                !timelineSupported.timelineSemaphore ||
+                !memoryModelSupported.vulkanMemoryModel ||
+                !bufferAddressSupported.bufferDeviceAddress ||
+                !vulkan13Supported.dynamicRendering ||
+                !vulkan13Supported.synchronization2) 
+            {
+                throw std::runtime_error("Required Vulkan features not supported by physical device");
+            }
+
+            // helper to check extension availability ...
+            auto hasExtension = [&](const char* name) 
+            {
+                return std::find_if(
+                    deviceExtensions_.begin(),
+                    deviceExtensions_.end(),
+                    [&](const char* ext) 
+                    {
+                        return std::strcmp(ext, name) == 0;
+                    }) != deviceExtensions_.end();
+            };
+
+            // feature structures for the logical device ...
+            vk::PhysicalDeviceFeatures2 features2{};
+            features2.features.samplerAnisotropy = vk::True;
+            features2.features.depthBiasClamp = coreSupported.depthBiasClamp ? vk::True : vk::False;
+            if (coreSupported.shaderSampledImageArrayDynamicIndexing) 
+            {
+                features2.features.shaderSampledImageArrayDynamicIndexing = vk::True;
+            }
+
+            vk::PhysicalDeviceTimelineSemaphoreFeatures timelineSemaphoreFeatures{};
+            timelineSemaphoreFeatures.timelineSemaphore = vk::True;
+
+            vk::PhysicalDeviceVulkanMemoryModelFeatures memoryModelFeatures{};
+            memoryModelFeatures.vulkanMemoryModel = vk::True;
+            memoryModelFeatures.vulkanMemoryModelDeviceScope = memoryModelSupported.vulkanMemoryModelDeviceScope ? vk::True : vk::False;
+
+            vk::PhysicalDeviceBufferDeviceAddressFeatures bufferDeviceAddressFeatures{};
+            bufferDeviceAddressFeatures.bufferDeviceAddress = vk::True;
+
+            vk::PhysicalDevice8BitStorageFeatures storage8BitFeatures{};
+            storage8BitFeatures.storageBuffer8BitAccess = storage8BitSupported.storageBuffer8BitAccess ? vk::True : vk::False;
+
+            vk::PhysicalDeviceVulkan11Features vulkan11Features{};
+            if (vulkan11Supported.shaderDrawParameters) 
+            {
+                vulkan11Features.shaderDrawParameters = vk::True;
+            }
+
+            vk::PhysicalDeviceVulkan13Features vulkan13Features{};
+            vulkan13Features.dynamicRendering = vk::True;
+            vulkan13Features.synchronization2 = vk::True;
+
+            vk::PhysicalDeviceDescriptorIndexingFeatures indexingFeaturesEnable{};
+            descriptorIndexingEnabled_ = false;
+            if (indexingFeaturesSupported.shaderSampledImageArrayNonUniformIndexing) 
+            {
+                indexingFeaturesEnable.shaderSampledImageArrayNonUniformIndexing = vk::True;
+                descriptorIndexingEnabled_ = true;
+            }
+            if (descriptorIndexingEnabled_) 
+            {
+                if (indexingFeaturesSupported.descriptorBindingPartiallyBound) indexingFeaturesEnable.descriptorBindingPartiallyBound = vk::True;
+                if (indexingFeaturesSupported.descriptorBindingUpdateUnusedWhilePending) indexingFeaturesEnable.descriptorBindingUpdateUnusedWhilePending = vk::True;
+                if (indexingFeaturesSupported.descriptorBindingSampledImageUpdateAfterBind) 
+                {
+                    indexingFeaturesEnable.descriptorBindingSampledImageUpdateAfterBind = vk::True;
+                    descriptorBindingSampledImageUpdateAfterBindEnabled_ = true;
+                }
+                if (indexingFeaturesSupported.descriptorBindingUniformBufferUpdateAfterBind) 
+                {
+                    indexingFeaturesEnable.descriptorBindingUniformBufferUpdateAfterBind = vk::True;
+                    descriptorBindingUniformBufferUpdateAfterBindEnabled_ = true;
+                }
+            }
+
+            vk::PhysicalDeviceRobustness2FeaturesEXT robust2Enable{};
+            bool hasRobust2 = hasExtension(VK_EXT_ROBUSTNESS_2_EXTENSION_NAME);
+            if (hasRobust2) 
+            {
+                if (robust2Supported.robustBufferAccess2) robust2Enable.robustBufferAccess2 = vk::True;
+                if (robust2Supported.robustImageAccess2) robust2Enable.robustImageAccess2 = vk::True;
+                if (robust2Supported.nullDescriptor) robust2Enable.nullDescriptor = vk::True;
+            }
+            robustness2Enabled_ = hasRobust2 && (robust2Enable.robustBufferAccess2 || robust2Enable.robustImageAccess2 || robust2Enable.nullDescriptor);
+
+            vk::PhysicalDeviceDynamicRenderingLocalReadFeaturesKHR localReadEnable{};
+            bool hasLocalRead = hasExtension(VK_KHR_DYNAMIC_RENDERING_LOCAL_READ_EXTENSION_NAME);
+            if (hasLocalRead && localReadSupported.dynamicRenderingLocalRead) 
+            {
+                localReadEnable.dynamicRenderingLocalRead = vk::True;
+            }
+            dynamicRenderingLocalReadEnabled_ = hasLocalRead && localReadEnable.dynamicRenderingLocalRead;
+
+            vk::PhysicalDeviceShaderTileImageFeaturesEXT tileImageEnable{};
+            bool hasTileImage = hasExtension(VK_EXT_SHADER_TILE_IMAGE_EXTENSION_NAME);
+            if (hasTileImage && tileImageSupported.shaderTileImageColorReadAccess) 
+            {
+                tileImageEnable.shaderTileImageColorReadAccess = vk::True;
+            }
+            shaderTileImageEnabled_ = hasTileImage && tileImageEnable.shaderTileImageColorReadAccess;
+
+            vk::PhysicalDeviceAccelerationStructureFeaturesKHR asFeaturesEnable{};
+            bool hasAS = hasExtension(VK_KHR_ACCELERATION_STRUCTURE_EXTENSION_NAME);
+            if (hasAS && accelerationStructureSupported.accelerationStructure) 
+            {
+                asFeaturesEnable.accelerationStructure = vk::True;
+            }
+            accelerationStructureEnabled_ = hasAS && asFeaturesEnable.accelerationStructure;
+
+            vk::PhysicalDeviceRayQueryFeaturesKHR rayQueryFeaturesEnable{};
+            bool hasRQ = hasExtension(VK_KHR_RAY_QUERY_EXTENSION_NAME);
+            if (hasRQ && rayQuerySupported.rayQuery) 
+            {
+                rayQueryFeaturesEnable.rayQuery = vk::True;
+            }
+            rayQueryEnabled_ = hasRQ && rayQueryFeaturesEnable.rayQuery;
+
+            // build the pNext chain ...
+            features2.pNext = &timelineSemaphoreFeatures;
+            timelineSemaphoreFeatures.pNext = &memoryModelFeatures;
+            memoryModelFeatures.pNext = &bufferDeviceAddressFeatures;
+            bufferDeviceAddressFeatures.pNext = &storage8BitFeatures;
+            storage8BitFeatures.pNext = &vulkan11Features;
+            vulkan11Features.pNext = &vulkan13Features;
+
+            void** tailNext = reinterpret_cast<void**>(&vulkan13Features.pNext);
+            if (descriptorIndexingEnabled_) 
+            {
+                *tailNext = &indexingFeaturesEnable;
+                tailNext = reinterpret_cast<void**>(&indexingFeaturesEnable.pNext);
+            }
+            if (hasRobust2) 
+            {
+                *tailNext = &robust2Enable;
+                tailNext = reinterpret_cast<void**>(&robust2Enable.pNext);
+            }
+#ifdef _WIN32
+            if (hasLocalRead) 
+            {
+                *tailNext = &localReadEnable;
+                tailNext = reinterpret_cast<void**>(&localReadEnable.pNext);
+            }
+            if (hasTileImage) {
+                *tailNext = &tileImageEnable;
+                tailNext = reinterpret_cast<void**>(&tileImageEnable.pNext);
+            }
+#endif
+            if (hasAS) 
+            {
+                *tailNext = &asFeaturesEnable;
+                tailNext = reinterpret_cast<void**>(&asFeaturesEnable.pNext);
+            }
+            if (hasRQ) 
+            {
+                *tailNext = &rayQueryFeaturesEnable;
+                tailNext = reinterpret_cast<void**>(&rayQueryFeaturesEnable.pNext);
+            }
+
+            // opacity micromap - VK_KHR_opacity_micromap
+            // also requires VK_KHR_device_address_commands for vkCreateAccelerationStructure2KHR
+            auto hasOpacityMicromap = hasExtension(VK_KHR_OPACITY_MICROMAP_EXTENSION_NAME)
+                && hasExtension(VK_KHR_DEVICE_ADDRESS_COMMANDS_EXTENSION_NAME);
+            vk::PhysicalDeviceOpacityMicromapFeaturesKHR opacityMicromapSupported{};
+            vk::PhysicalDeviceOpacityMicromapFeaturesKHR opacityMicromapEnable{};
+            if (hasOpacityMicromap) 
+            {
+                auto featChain2 = physicalDevice_.getFeatures2<
+                    vk::PhysicalDeviceFeatures2,
+                    vk::PhysicalDeviceOpacityMicromapFeaturesKHR>();
+                opacityMicromapSupported = featChain2.template get<vk::PhysicalDeviceOpacityMicromapFeaturesKHR>();
+                if (opacityMicromapSupported.micromap) 
+                {
+                    opacityMicromapEnable.micromap = vk::True;
+#ifdef ENABLE_OPACITY_MICROMAPS
+                    opacityMicromapEnabled_ = true;
+#endif
+                    *tailNext = &opacityMicromapEnable;
+                    tailNext = reinterpret_cast<void**>(&opacityMicromapEnable.pNext);
+                }
+            }
+
+            // record which features ended up enabled (for runtime decisions/diagnostics) ...
+            robustness2Enabled_ = hasRobust2 && (robust2Enable.robustBufferAccess2 == vk::True ||
+                robust2Enable.robustImageAccess2 == vk::True ||
+                robust2Enable.nullDescriptor == vk::True);
+#ifdef _WIN32
+            dynamicRenderingLocalReadEnabled_ = hasLocalRead && (localReadEnable.dynamicRenderingLocalRead == vk::True);
+            shaderTileImageEnabled_ = hasTileImage && (tileImageEnable.shaderTileImageColorReadAccess == vk::True ||
+                tileImageEnable.shaderTileImageDepthReadAccess == vk::True ||
+                tileImageEnable.shaderTileImageStencilReadAccess == vk::True);
+#else
+            dynamicRenderingLocalReadEnabled_ = false;
+            shaderTileImageEnabled_ = false;
+#endif
+            accelerationStructureEnabled_ = hasAS && (asFeaturesEnable.accelerationStructure == vk::True);
+            rayQueryEnabled_ = hasRQ && (rayQueryFeaturesEnable.rayQuery == vk::True);
+
+            // device create info ...
+            vk::DeviceCreateInfo createInfo
+            {
+                .pNext = &features2,
+                .queueCreateInfoCount = static_cast<uint32_t>(queueCreateInfos.size()),
+                .pQueueCreateInfos = queueCreateInfos.data(),
+                .enabledExtensionCount = static_cast<uint32_t>(deviceExtensions_.size()),
+                .ppEnabledExtensionNames = deviceExtensions_.data(),
+                .pEnabledFeatures = nullptr
+            };
+
+            device_ = vk::raii::Device(physicalDevice_, createInfo);
+
+            // initialize the dispatcher with the device to load device-level functions
+            VULKAN_HPP_DEFAULT_DISPATCHER.init(*device_);
+
+            // get queue handles ...
+            graphicsQueue_ = vk::raii::Queue(device_, queueFamilyIndices_.GraphicsFamily.value(), 0);
+            presentQueue_ = vk::raii::Queue(device_, queueFamilyIndices_.PresentFamily.value(), 0);
+            computeQueue_ = vk::raii::Queue(device_, queueFamilyIndices_.ComputeFamily.value(), 0);
+            transferQueue_ = vk::raii::Queue(device_, queueFamilyIndices_.TransferFamily.value(), 0);
+
+            // create global timeline semaphore for uploads early (needed before default texture creation) ...
+            vk::StructureChain<vk::SemaphoreCreateInfo, vk::SemaphoreTypeCreateInfo> timelineChain(
+                {},
+                { .semaphoreType = vk::SemaphoreType::eTimeline, .initialValue = 0 });
             uploadsTimeline_ = vk::raii::Semaphore(device_, timelineChain.get<vk::SemaphoreCreateInfo>());
             uploadTimelineLastSubmitted_.store(0, std::memory_order_relaxed);
 
