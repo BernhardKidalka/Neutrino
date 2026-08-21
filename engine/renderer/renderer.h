@@ -49,6 +49,12 @@
 #	define VK_EXT_SHADER_TILE_IMAGE_EXTENSION_NAME "VK_EXT_shader_tile_image"
 #endif
 
+// opacity Micromap fallback (KHR vs EXT)
+#ifndef VK_KHR_OPACITY_MICROMAP_EXTENSION_NAME
+#	define VK_KHR_OPACITY_MICROMAP_EXTENSION_NAME "VK_KHR_opacity_micromap"
+#endif
+
+
 namespace Neutrino
 {
 

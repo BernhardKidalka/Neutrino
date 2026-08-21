@@ -34,7 +34,8 @@
 VULKAN_HPP_DEFAULT_DISPATCH_LOADER_DYNAMIC_STORAGE;
 
 #include <vulkan/vk_platform.h>
-#include <vulkan/vulkan.h> // for PFN_vkGetInstanceProcAddr and C types
+#include <vulkan/vulkan.h>          // for PFN_vkGetInstanceProcAddr and C types
+#include <vulkan/vulkan_raii.hpp>
 
 // debug callback for vk::raii - uses Vulkan-Hpp C++ types
 static vk::Bool32 debugCallbackWrapper(
@@ -896,8 +897,10 @@ namespace Neutrino
                 vk::PhysicalDeviceVulkan13Features,
                 vk::PhysicalDeviceDescriptorIndexingFeatures,
                 vk::PhysicalDeviceRobustness2FeaturesEXT,
+#ifdef _WIN32                
                 vk::PhysicalDeviceDynamicRenderingLocalReadFeaturesKHR,
                 vk::PhysicalDeviceShaderTileImageFeaturesEXT,
+#endif   
                 vk::PhysicalDeviceAccelerationStructureFeaturesKHR,
                 vk::PhysicalDeviceRayQueryFeaturesKHR>();
 
@@ -911,8 +914,10 @@ namespace Neutrino
             const auto& vulkan13Supported = featureChainSupported.get<vk::PhysicalDeviceVulkan13Features>();
             const auto& indexingFeaturesSupported = featureChainSupported.get<vk::PhysicalDeviceDescriptorIndexingFeatures>();
             const auto& robust2Supported = featureChainSupported.get<vk::PhysicalDeviceRobustness2FeaturesEXT>();
+#ifdef _WIN32                
             const auto& localReadSupported = featureChainSupported.get<vk::PhysicalDeviceDynamicRenderingLocalReadFeaturesKHR>();
             const auto& tileImageSupported = featureChainSupported.get<vk::PhysicalDeviceShaderTileImageFeaturesEXT>();
+#endif
             const auto& accelerationStructureSupported = featureChainSupported.get<vk::PhysicalDeviceAccelerationStructureFeaturesKHR>();
             const auto& rayQuerySupported = featureChainSupported.get<vk::PhysicalDeviceRayQueryFeaturesKHR>();
 
@@ -1029,6 +1034,7 @@ namespace Neutrino
             }
             robustness2Enabled_ = hasRobust2 && (robust2Enable.robustBufferAccess2 || robust2Enable.robustImageAccess2 || robust2Enable.nullDescriptor);
 
+#ifdef _WIN32                
             vk::PhysicalDeviceDynamicRenderingLocalReadFeaturesKHR localReadEnable{};
             bool hasLocalRead = hasExtension(VK_KHR_DYNAMIC_RENDERING_LOCAL_READ_EXTENSION_NAME);
             if (hasLocalRead && localReadSupported.dynamicRenderingLocalRead) 
@@ -1044,6 +1050,7 @@ namespace Neutrino
                 tileImageEnable.shaderTileImageColorReadAccess = vk::True;
             }
             shaderTileImageEnabled_ = hasTileImage && tileImageEnable.shaderTileImageColorReadAccess;
+#endif
 
             vk::PhysicalDeviceAccelerationStructureFeaturesKHR asFeaturesEnable{};
             bool hasAS = hasExtension(VK_KHR_ACCELERATION_STRUCTURE_EXTENSION_NAME);
