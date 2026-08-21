@@ -100,7 +100,6 @@ namespace Neutrino
         // select a suitable physical device (GPU) for rendering
         bool selectPhysicalDevice();
         // create a logical device from the selected physical device
-        bool createLogicalDevice_v1();
         bool createLogicalDevice();
         // create a swap chain for presenting rendered images to the surface
         bool createSwapChain();
