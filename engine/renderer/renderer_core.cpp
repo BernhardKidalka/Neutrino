@@ -37,12 +37,12 @@ VULKAN_HPP_DEFAULT_DISPATCH_LOADER_DYNAMIC_STORAGE;
 #include <vulkan/vulkan.h>          // for PFN_vkGetInstanceProcAddr and C types
 #include <vulkan/vulkan_raii.hpp>
 
-// debug callback for vk::raii - uses Vulkan-Hpp C++ types
-static vk::Bool32 debugCallbackWrapper(
+// Vulkan-Hpp style callback signature for newer headers expecting vk:: types
+static VKAPI_ATTR vk::Bool32 VKAPI_CALL debugCallbackVkHpp(
     vk::DebugUtilsMessageSeverityFlagBitsEXT messageSeverity,
     [[maybe_unused]] vk::DebugUtilsMessageTypeFlagsEXT messageType,
     const vk::DebugUtilsMessengerCallbackDataEXT* pCallbackData,
-    [[maybe_unused]] void* pUserData)
+    [[maybe_unused]] void* pUserData) 
 {
     if (messageSeverity & vk::DebugUtilsMessageSeverityFlagBitsEXT::eError)
     {
@@ -56,11 +56,8 @@ static vk::Bool32 debugCallbackWrapper(
     {
         Neutrino::Logger::Info("Validation layer: " + std::string(pCallbackData->pMessage));
     }
-    
     Neutrino::Logger::Flush();
-
-    // note: return VK_FALSE to tell Vulkan not to abort the API call causing the latest validation message, otherwise return VK_TRUE
-    return VK_FALSE;
+    return vk::False;
 }
 
 namespace Neutrino
@@ -319,21 +316,15 @@ namespace Neutrino
         try 
         {
             // setup debug messenger create info ...
-            vk::DebugUtilsMessengerCreateInfoEXT createInfo
-            {
-                .messageSeverity = vk::DebugUtilsMessageSeverityFlagBitsEXT::eVerbose |
-                    vk::DebugUtilsMessageSeverityFlagBitsEXT::eInfo |
-                    vk::DebugUtilsMessageSeverityFlagBitsEXT::eWarning |
-                    vk::DebugUtilsMessageSeverityFlagBitsEXT::eError,
-                .messageType = vk::DebugUtilsMessageTypeFlagBitsEXT::eGeneral |
-                    vk::DebugUtilsMessageTypeFlagBitsEXT::eValidation |
-                    vk::DebugUtilsMessageTypeFlagBitsEXT::ePerformance,
-#ifdef _WIN32
-                .pfnUserCallback = static_cast<vk::PFN_DebugUtilsMessengerCallbackEXT>(&debugCallbackWrapper)
-#else
-                .pfnUserCallback = reinterpret_cast<PFN_vkDebugUtilsMessengerCallbackEXT>(&debugCallbackWrapper)
-#endif
-            };
+            vk::DebugUtilsMessengerCreateInfoEXT createInfo{};
+            createInfo.messageSeverity = vk::DebugUtilsMessageSeverityFlagBitsEXT::eVerbose |
+                vk::DebugUtilsMessageSeverityFlagBitsEXT::eInfo |
+                vk::DebugUtilsMessageSeverityFlagBitsEXT::eWarning |
+                vk::DebugUtilsMessageSeverityFlagBitsEXT::eError;
+            createInfo.messageType = vk::DebugUtilsMessageTypeFlagBitsEXT::eGeneral |
+                vk::DebugUtilsMessageTypeFlagBitsEXT::eValidation |
+                vk::DebugUtilsMessageTypeFlagBitsEXT::ePerformance;
+            createInfo.pfnUserCallback = &debugCallbackVkHpp;
 
             // create debug messenger
             debugMessenger_ = vk::raii::DebugUtilsMessengerEXT(instance_, createInfo);
