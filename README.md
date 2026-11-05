@@ -40,12 +40,22 @@ cmake -B build -G "Visual Studio 18 2026"
 cmake --build build --config Release
 ```
 
-### Linux (Unix makefiles)
+### Linux / macOS (Unix makefiles)
 
 ```
 cmake -B build -DCMAKE_BUILD_TYPE=Release
 cmake --build build
 ```
+
+### CMake support in IDE's
+
+Modern IDE's like **Visual Studio** or **CLion** provide very good CMake integration and support if you prefer not to configure or build on the command line. Simply open the **CMakeLists.txt in the project root** and wait until the CMake configure step has passed. Afterwards you can build the project in the IDE and run it. Please refer to the online documentation of Visual Studio / CLion to get more help on CMake integration.
+
+I work with **Visual Studio 2026 Community** on **Windows 11** and **CLion 2026.3** on **Ubuntu Linux** and **macOS 27**. The **Neutrino Engine** builds and runs on all three platforms with the same code base.
+
+One hint for **macOS**: macOS has no native support for Vulkan. But you can do Vulkan development on macOS with the **KosmicKrisp** Mesa Vulkan driver, which implements Vulkan 1.4 support based on **Apple's Metal 4 API**. KosmicKrisp comes with the Vulkan SDK installation for macOS (https://vulkan.lunarg.com/sdk/home#mac).
+
+See https://www.lunarg.com/kosmickrisp-achieves-vulkan-1-4-conformance-on-apple-silicon/ for more details.
 
 ## Project Structure
 
@@ -81,5 +91,7 @@ Neutrino/
 
 ## Dependencies
 
-- **Vulkan SDK** - Graphics API
+- **Vulkan SDK** - Graphics API (https://vulkan.lunarg.com/)
 - **GLFW** (submodule) - Window and input abstraction
+
+You need to install the **Vulkan SDK** on your Dev-PC if you want to build the **Neutrino Engine** project. **GLFW** will be fetched as sub-module when you clone the project.
