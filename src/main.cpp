@@ -18,7 +18,7 @@
 // Project       : Neutrino Engine
 // File          : Neutrino\src\main.cpp
 // Modifications : B. Kidalka
-// Date          : 2026-08-12
+// Date          : 2026-11-05
 // Language      : C++
 // Description   : Neutrino Engine main entry point.
 //
@@ -43,7 +43,7 @@ int main([[maybe_unused]] int argc, [[maybe_unused]] char* argv[])
         const std::string appName{ "Neutrino Engine" };
         
         std::cout << "================================\n";
-        std::cout << appName << " - Version 0.0.1 \n";
+        std::cout << appName << " - Version 0.1.0 \n";
         std::cout << "================================\n\n";
 
         // create and initialize the engine ...

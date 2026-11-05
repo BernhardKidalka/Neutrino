@@ -18,7 +18,7 @@
 // Project       : Neutrino Engine
 // File          : Neutrino\engine\renderer\renderer_core.cpp
 // Modifications : B. Kidalka
-// Date          : 2026-08-21
+// Date          : 2026-11-05
 // Language      : C++
 // Description   : Renderer core implementation.
 //
@@ -634,9 +634,25 @@ namespace Neutrino
             vk::PhysicalDeviceFeatures2 features2{};
             features2.features.samplerAnisotropy = vk::True;
             features2.features.depthBiasClamp = coreSupported.depthBiasClamp ? vk::True : vk::False;
+            if (coreSupported.robustBufferAccess) 
+            {
+                features2.features.robustBufferAccess = vk::True;
+            }
             if (coreSupported.shaderSampledImageArrayDynamicIndexing) 
             {
                 features2.features.shaderSampledImageArrayDynamicIndexing = vk::True;
+            }
+
+            // VK_EXT_robustness2 requires the core robustBufferAccess feature to be enabled when
+            // robustBufferAccess2 is requested.
+            if (robust2Supported.robustBufferAccess2) 
+            {
+                features2.features.robustBufferAccess = vk::True;
+            }
+
+            if (robust2Supported.robustBufferAccess2 && !coreSupported.robustBufferAccess)
+            {
+                Logger::Warning("VK_EXT_robustness2 requested robustBufferAccess2 but base robustBufferAccess is unsupported");
             }
 
             vk::PhysicalDeviceTimelineSemaphoreFeatures timelineSemaphoreFeatures{};
