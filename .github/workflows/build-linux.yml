@@ -8,63 +8,113 @@ on:
 
 jobs:
   build:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-26.04
+    timeout-minutes: 45
+
+    env:
+      VULKAN_SDK_VERSION: "1.4.357"
+      GCC_VERSION: "15.2.0"
+      CC: gcc-15
+      CXX: g++-15
 
     steps:
-      - uses: actions/checkout@v4
+      - name: Checkout
+        uses: actions/checkout@v4
         with:
           submodules: recursive
           fetch-depth: 0
 
-      - name: Init submodules (fallback)
+      - name: Init submodules
+        shell: bash
         run: |
+          set -euo pipefail
           git submodule update --init --recursive
 
-      - name: Install dependencies (robust, ubuntu-friendly)
+      - name: Install system build dependencies
+        shell: bash
         run: |
           set -euo pipefail
           export DEBIAN_FRONTEND=noninteractive
           sudo apt-get update
+          sudo apt-get install -y --no-install-recommends \
+            gcc-15 g++-15 build-essential cmake pkg-config curl xz-utils ninja-build \
+            libglfw3-dev \
+            libxkbcommon-dev libwayland-dev libegl1-mesa-dev \
+            libwayland-egl1-mesa libwayland-cursor0 \
+            libx11-dev libxrandr-dev libxi-dev libxinerama-dev libxcursor-dev \
+            libasound2-dev
 
-          # Base packages required for build and common dev headers
-          PKGS_BASE="vulkan-tools libvulkan-dev libglfw3-dev build-essential cmake pkg-config \
-            libxkbcommon-dev libwayland-dev libegl1-mesa-dev libwayland-egl1-mesa libwayland-cursor0 \
-            libx11-dev libxrandr-dev libxi-dev libxinerama-dev libxcursor-dev libasound2-dev"
-          echo "Installing base packages: $PKGS_BASE"
-          sudo apt-get install -y --no-install-recommends $PKGS_BASE
-
-          # Helper: check whether apt has a candidate for a package
-          has_candidate() {
-            pkg="$1"
-            cand=$(apt-cache policy "$pkg" 2>/dev/null | awk '/Candidate:/ {print $2}')
-            if [ -n "$cand" ] && [ "$cand" != "(none)" ]; then
-              return 0
-            fi
-            return 1
+      - name: Validate compiler version
+        shell: bash
+        run: |
+          set -euo pipefail
+          gcc_version="$(g++-15 -dumpfullversion)"
+          echo "Detected g++ version: ${gcc_version}"
+          test "${gcc_version}" = "${GCC_VERSION}" || {
+            echo "Expected g++ ${GCC_VERSION}, found ${gcc_version}" >&2
+            exit 1
           }
 
-          # Attempt to install an optional Vulkan validation package if available
-          if has_candidate vulkan-validationlayers-dev; then
-            echo "Installing vulkan-validationlayers-dev"
-            sudo apt-get install -y --no-install-recommends vulkan-validationlayers-dev
-          elif has_candidate vulkan-utility-libraries-dev; then
-            echo "Installing vulkan-utility-libraries-dev"
-            sudo apt-get install -y --no-install-recommends vulkan-utility-libraries-dev
-          else
-            echo "No Vulkan validation/utility package available; continuing without it"
+      - name: Install Vulkan SDK
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          # Lunarg SDK tarballs sometimes use .0 suffix for 1.4.357;
+          # try both accepted forms to avoid brittle CI breakage.
+          versions=( "1.4.357.0" "1.4.357" )
+
+          sdk_root=""
+          for ver in "${versions[@]}"; do
+            archive="vulkansdk-linux-x86_64-${ver}.tar.xz"
+            url="https://sdk.lunarg.com/sdk/download/${ver}/linux/${archive}"
+
+            echo "Downloading Vulkan SDK ${ver} from ${url}"
+            if curl --fail --location --retry 3 --silent --show-error "${url}" -o "${RUNNER_TEMP}/${archive}"; then
+              mkdir -p "${RUNNER_TEMP}/vulkan-sdk"
+              tar -xJf "${RUNNER_TEMP}/${archive}" -C "${RUNNER_TEMP}/vulkan-sdk"
+              sdk_root="$(find "${RUNNER_TEMP}/vulkan-sdk" -type d -path '*/x86_64' -print -quit || true)"
+              if [ -n "${sdk_root}" ] && [ -d "${sdk_root}/include/vulkan" ]; then
+                break
+              fi
+            fi
+          done
+
+          if [ -z "${sdk_root}" ] || [ ! -d "${sdk_root}/include/vulkan" ]; then
+            echo "Failed to locate a usable Vulkan SDK under ${RUNNER_TEMP}/vulkan-sdk" >&2
+            exit 1
           fi
 
+          echo "Using Vulkan SDK at: ${sdk_root}"
+          echo "VULKAN_SDK=${sdk_root}" >> "${GITHUB_ENV}"
+          echo "${sdk_root}/bin" >> "${GITHUB_PATH}"
+          echo "VK_LAYER_PATH=${sdk_root}/etc/vulkan/explicit_layer.d" >> "${GITHUB_ENV}"
+          echo "LD_LIBRARY_PATH=${sdk_root}/lib:${LD_LIBRARY_PATH:-}" >> "${GITHUB_ENV}"
+
       - name: Configure CMake
+        shell: bash
         run: |
-          mkdir -p build
-          cmake -S . -B build -DCMAKE_BUILD_TYPE=Release
+          set -euo pipefail
+          export VULKAN_SDK="${VULKAN_SDK:-${RUNNER_TEMP}/vulkan-sdk}"
+          echo "VULKAN_SDK=${VULKAN_SDK}"
+
+          cmake -S . -B build \
+            -G "Ninja" \
+            -DCMAKE_BUILD_TYPE=Release \
+            -DCMAKE_C_COMPILER=gcc-15 \
+            -DCMAKE_CXX_COMPILER=g++-15 \
+            -DCMAKE_PREFIX_PATH="${VULKAN_SDK}" \
+            -DVulkan_INCLUDE_DIR="${VULKAN_SDK}/include" \
+            -DVulkan_LIBRARY="${VULKAN_SDK}/lib/libvulkan.so"
 
       - name: Build
+        shell: bash
         run: |
+          set -euo pipefail
           cmake --build build --parallel
 
       - name: Upload artifacts
-        uses: actions/upload-artifact@v7
+        uses: actions/upload-artifact@v4
         with:
           name: neutrino-linux
           path: build/bin/Neutrino
