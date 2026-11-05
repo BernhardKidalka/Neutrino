@@ -40,7 +40,7 @@ jobs:
             gcc-15 g++-15 build-essential cmake pkg-config curl xz-utils ninja-build \
             libglfw3-dev \
             libxkbcommon-dev libwayland-dev libegl1-mesa-dev \
-            libwayland-egl1-mesa libwayland-cursor0 \
+            libwayland-cursor0 \
             libx11-dev libxrandr-dev libxi-dev libxinerama-dev libxcursor-dev \
             libasound2-dev
 
