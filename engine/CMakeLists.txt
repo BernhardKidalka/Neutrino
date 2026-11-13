@@ -32,6 +32,7 @@ target_include_directories(NeutrinoEngine
 	PUBLIC
 		${CMAKE_CURRENT_SOURCE_DIR}/include
 		${Vulkan_INCLUDE_DIR}
+		${GLM_INCLUDE_DIR}
 	PRIVATE
 		${CMAKE_CURRENT_SOURCE_DIR}
 )

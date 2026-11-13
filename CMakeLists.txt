@@ -43,6 +43,26 @@ endif()
 # Dependencies
 # ==============================================================================
 
+# GLM Configuration
+find_path(GLM_INCLUDE_DIR
+    NAMES glm/glm.hpp
+    PATHS
+        "$ENV{VULKAN_SDK}/include"
+        "$ENV{VULKAN_SDK}/Include"
+        "/opt/homebrew/include"
+        "/usr/local/include"
+        "/usr/include"
+        "/opt/local/include"
+        ENV CPLUS_INCLUDE_PATH
+        ENV CPATH
+)
+
+if(GLM_INCLUDE_DIR STREQUAL "GLM_INCLUDE_DIR-NOTFOUND")
+    message(FATAL_ERROR "GLM headers were not found. Install the GLM development package (for example: libglm-dev on Linux, or 'brew install glm' on macOS).")
+endif()
+
+message(STATUS "GLM headers found: ${GLM_INCLUDE_DIR}")
+
 # GLFW Configuration
 set(GLFW_BUILD_DOCS OFF CACHE BOOL "" FORCE)
 set(GLFW_BUILD_TESTS OFF CACHE BOOL "" FORCE)

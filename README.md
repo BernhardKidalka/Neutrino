@@ -14,6 +14,7 @@ This repository is for my private training and experiments with computer graphic
 - **CMake** >= 3.20
 - **C++20** compatible compiler (MSVC, GCC, Clang)
 - **Vulkan SDK** installed and available on system
+- **GLM** development headers installed and available on system (for example `libglm-dev` on Linux or `brew install glm` on macOS)
 - **Git** (for submodule support)
 
 ## Clone Repository with Submodules
