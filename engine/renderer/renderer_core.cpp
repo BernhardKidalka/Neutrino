@@ -18,7 +18,7 @@
 // Project       : Neutrino Engine
 // File          : Neutrino\engine\renderer\renderer_core.cpp
 // Modifications : B. Kidalka
-// Date          : 2026-11-05
+// Date          : 2026-11-13
 // Language      : C++
 // Description   : Renderer core implementation.
 //
@@ -172,6 +172,14 @@ namespace Neutrino
             return false;
         }
 
+        // TODO : activate graphics pipeline creation when SPIR-V shader compilation is fully integrated
+        // create the graphics pipeline 
+        //if (!createGraphicsPipeline()) 
+        //{
+        //    Logger::Error("Failed to create graphics pipeline");
+        //    return false;
+        //}
+        
         initialized_ = true;
         Logger::Info("Renderer initialized successfully.");
         return true;

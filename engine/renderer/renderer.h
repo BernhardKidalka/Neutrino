@@ -18,7 +18,7 @@
 // Project       : Neutrino Engine
 // File          : Neutrino\engine\renderer\renderer.h
 // Modifications : B. Kidalka
-// Date          : 2026-08-21
+// Date          : 2026-11-13
 // Language      : C++
 // Description   : Renderer declarations.
 //
@@ -82,6 +82,8 @@ namespace Neutrino
         void Shutdown();
         void RenderFrame();
         void WaitIdle();
+        
+        std::vector<char> ReadFile(const std::string& filename);
 
     private:
         ///////////////////////////////////////////////////////////////////////////////////////////////
@@ -111,10 +113,20 @@ namespace Neutrino
         bool setupDynamicRendering();
         // create descriptor set layout for resource bindings
         bool createDescriptorSetLayout();
+        // create graphics pipeline for rendering
+        bool createGraphicsPipeline();
 
+        ///////////////////////////////////////////////////////////////////////
         // renderer utils ...
+        
         // find queue family indices for the given physical device
         QueueFamilyIndices findQueueFamilies(const vk::raii::PhysicalDevice& device);
+        // create a Vulkan shader module from the given SPIR-V code
+        vk::raii::ShaderModule createShaderModule(const std::vector<char>& code);
+        // find a supported format from the given candidates with the specified tiling and features
+        vk::Format findSupportedFormat(const std::vector<vk::Format>& candidates, vk::ImageTiling tiling, vk::FormatFeatureFlags features);
+        // find a supported depth format for depth buffering
+        vk::Format findDepthFormat();
         // check if the given physical device supports all required device extensions
         bool checkDeviceExtensionSupport(vk::raii::PhysicalDevice& device);
         // query swap chain support details for the given physical device
@@ -225,20 +237,25 @@ namespace Neutrino
 
         // the texture that will hold a snapshot of the opaque scene
         // one off-screen color image per frame-in-flight to avoid cross-frame read/write hazards
-        std::vector<vk::raii::Image> opaqueSceneColorImages_;
-        std::vector<std::unique_ptr<MemoryPool::Allocation>> opaqueSceneColorImageAllocations_;
-        std::vector<vk::raii::ImageView> opaqueSceneColorImageViews_;
+        std::vector<vk::raii::Image>                            opaqueSceneColorImages_;
+        std::vector<std::unique_ptr<MemoryPool::Allocation>>    opaqueSceneColorImageAllocations_;
+        std::vector<vk::raii::ImageView>                        opaqueSceneColorImageViews_;
+        
         // track the current layout per frame (initialized to eUndefined at creation)
-        std::vector<vk::ImageLayout> opaqueSceneColorImageLayouts_;
-        vk::raii::Sampler opaqueSceneColorSampler_{ nullptr };
+        std::vector<vk::ImageLayout>    opaqueSceneColorImageLayouts_;
+        vk::raii::Sampler               opaqueSceneColorSampler_{ nullptr };
         
         // dynamic rendering setup ...
-        vk::RenderingInfo dynamicRenderingInfo_;
-        std::vector<vk::RenderingAttachmentInfo> colorAttachments_;
-        vk::RenderingAttachmentInfo depthAttachment_;
+        vk::RenderingInfo                           dynamicRenderingInfo_;
+        std::vector<vk::RenderingAttachmentInfo>    colorAttachments_;
+        vk::RenderingAttachmentInfo                 depthAttachment_;
         
         // descriptor set layouts (declared before pools and sets)
         vk::raii::DescriptorSetLayout descriptorSetLayout_ { nullptr };
+        
+        // pipelines ...
+        vk::raii::PipelineLayout    pipelineLayout_ { nullptr };
+        vk::raii::Pipeline          graphicsPipeline_ { nullptr };
 
     };
 }

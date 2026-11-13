@@ -18,7 +18,7 @@
 // Project       : Neutrino Engine
 // File          : Neutrino\engine\renderer\renderer_utils.cpp
 // Modifications : B. Kidalka
-// Date          : 2026-08-19
+// Date          : 2026-11-13
 // Language      : C++
 // Description   : Renderer utils implementation.
 //
@@ -28,6 +28,7 @@
 #include "../core/logger.h"
 
 #include <set>
+#include <fstream>
 
 namespace Neutrino
 {
@@ -85,6 +86,62 @@ namespace Neutrino
         }
 
         return indices;
+    }
+    
+    // find supported format
+    vk::Format Renderer::findSupportedFormat(
+        const std::vector<vk::Format>& candidates, 
+        vk::ImageTiling tiling, 
+        vk::FormatFeatureFlags features) 
+    {
+        try 
+        {
+            for (vk::Format format : candidates) 
+            {
+                vk::FormatProperties props = physicalDevice_.getFormatProperties(format);
+
+                if (tiling == vk::ImageTiling::eLinear && (props.linearTilingFeatures & features) == features) 
+                {
+                    return format;
+                }
+                else if (tiling == vk::ImageTiling::eOptimal && (props.optimalTilingFeatures & features) == features) 
+                {
+                    return format;
+                }
+            }
+
+            throw std::runtime_error("Failed to find supported format");
+        }
+        catch (const std::exception& e) 
+        {
+            Logger::Error("Failed to find supported format: " + std::string(e.what()));
+            throw;
+        }
+    }
+
+    // find depth format
+    vk::Format Renderer::findDepthFormat() 
+    {
+        try 
+        {
+            vk::Format depthFormat = findSupportedFormat(
+                { 
+                    vk::Format::eD32Sfloat, 
+                    vk::Format::eD32SfloatS8Uint, 
+                    vk::Format::eD24UnormS8Uint 
+                },
+                vk::ImageTiling::eOptimal,
+                vk::FormatFeatureFlagBits::eDepthStencilAttachment
+            );
+            Logger::Info("Found depth format: " + std::to_string(static_cast<int>(depthFormat)));
+            return depthFormat;
+        }
+        catch (const std::exception& e) 
+        {
+            Logger::Error("Failed to find supported depth format, falling back to D32_SFLOAT : " + std::string(e.what()));
+            // fallback to D32_SFLOAT which is widely supported
+            return vk::Format::eD32Sfloat;
+        }
     }
 
     bool Renderer::checkDeviceExtensionSupport(vk::raii::PhysicalDevice& device) 
@@ -188,6 +245,69 @@ namespace Neutrino
             Logger::Info("Renderer: Clamped extent: " + std::to_string(actualExtent.width) + " x " + std::to_string(actualExtent.height));
 
             return actualExtent;
+        }
+    }
+    
+    // read file
+    std::vector<char> Renderer::ReadFile(const std::string& filename) 
+    {
+        try 
+        {
+            // open file at end to get size
+            std::ifstream file(filename, std::ios::ate | std::ios::binary);
+
+            if (!file.is_open()) 
+            {
+                throw std::runtime_error("Failed to open file: " + filename);
+            }
+
+            // get file size ...
+            size_t fileSize = file.tellg();
+            std::vector<char> buffer(fileSize);
+
+            // go back to beginning of file and read data ...
+            file.seekg(0);
+            file.read(buffer.data(), fileSize);
+
+            // close file
+            file.close();
+
+            return buffer;
+        }
+        catch (const std::exception& e) 
+        {
+            Logger::Error("Failed to read file " + filename  + " : " + std::string( e.what()));
+            throw;
+        }
+    }
+
+    // create shader module
+    vk::raii::ShaderModule Renderer::createShaderModule(const std::vector<char>& code) 
+    {
+        try 
+        {
+            // ensure 4-byte alignment for code
+            if (code.size() % 4 != 0) 
+            {
+                throw std::runtime_error("Shader code size must be a multiple of 4");
+            }
+
+            std::vector<uint32_t> alignedCode(code.size() / 4);
+            std::memcpy(alignedCode.data(), code.data(), code.size());
+
+            // create shader module ...
+            vk::ShaderModuleCreateInfo createInfo
+            {
+                .codeSize = code.size(),
+                .pCode = alignedCode.data()
+            };
+
+            return vk::raii::ShaderModule(device_, createInfo);
+        }
+        catch (const std::exception& e) 
+        {
+            Logger::Error("Failed to create shader module: " + std::string(e.what()));
+            throw;
         }
     }
 
