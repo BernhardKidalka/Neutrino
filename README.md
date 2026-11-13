@@ -69,6 +69,8 @@ Neutrino/
 │   ├── CMakeLists.txt          # Engine library configuration
 │   ├── include/
 │   │    └── engine.h
+│   ├── components/
+│   │    └── mesh_component.h
 │   ├── core/
 │   │    ├── engine.cpp
 │   │    ├── logger.cpp

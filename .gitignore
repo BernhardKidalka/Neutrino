@@ -73,3 +73,6 @@ Testing/
 
 # JetBrains IDEs
 .idea/
+
+# macOS
+.DS_Store
