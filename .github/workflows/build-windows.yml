@@ -21,11 +21,10 @@ jobs:
         run: |
           git submodule update --init --recursive
 
-      - name: Install Vulkan SDK (Chocolatey)
+      - name: Install Vulkan SDK
         shell: pwsh
         run: |
           choco install vulkan-sdk -y
-          # Try to find installed SDK directory under C:\VulkanSDK
           Start-Sleep -Seconds 2
 
       - name: Verify Vulkan SDK and export env
@@ -36,13 +35,41 @@ jobs:
             Get-ChildItem C:\ -Directory -ErrorAction SilentlyContinue | Where-Object { $_.Name -match 'Vulkan' } | Select-Object FullName
             throw "Vulkan SDK not found under C:\VulkanSDK"
           }
-          $sdkDir = Get-ChildItem 'C:\VulkanSDK' | Where-Object {$_.PSIsContainer} | Sort-Object Name -Descending | Select-Object -First 1
-          if (-not $sdkDir) { throw "Vulkan SDK not found under C:\VulkanSDK" }
+
+          $sdkDir = Get-ChildItem 'C:\VulkanSDK' | Where-Object { $_.PSIsContainer } | Sort-Object Name -Descending | Select-Object -First 1
+          if (-not $sdkDir) {
+            throw "Vulkan SDK not found under C:\VulkanSDK"
+          }
+
           Write-Host "Vulkan SDK found: $($sdkDir.FullName)"
           Add-Content -Path $env:GITHUB_ENV -Value "VULKAN_SDK=$($sdkDir.FullName)"
           Add-Content -Path $env:GITHUB_PATH -Value "$($sdkDir.FullName)\Bin"
           Add-Content -Path $env:GITHUB_ENV -Value "INCLUDE=$($sdkDir.FullName)\Include;$($env:INCLUDE)"
           Add-Content -Path $env:GITHUB_ENV -Value "LIB=$($sdkDir.FullName)\Lib;$($env:LIB)"
+
+      - name: Ensure GLM is available with the Vulkan SDK
+        shell: pwsh
+        run: |
+          $glmHeader = Join-Path $env:VULKAN_SDK 'Include\glm\glm.hpp'
+          if (Test-Path $glmHeader) {
+            Write-Host "GLM headers already available in Vulkan SDK: $glmHeader"
+            return
+          }
+
+          Write-Host "GLM not found in Vulkan SDK. Installing GLM headers next."
+          $glmDir = Join-Path $env:RUNNER_TEMP 'glm'
+          git clone --depth 1 --branch 1.0.1 https://github.com/g-truc/glm.git $glmDir
+
+          $targetDir = Join-Path $env:VULKAN_SDK 'Include\glm'
+          New-Item -ItemType Directory -Force -Path $targetDir | Out-Null
+
+          Copy-Item -Path (Join-Path $glmDir 'glm\*') -Destination $targetDir -Recurse -Force
+
+          if (-not (Test-Path $glmHeader)) {
+            throw "GLM header was not installed correctly: $glmHeader"
+          }
+
+          Write-Host "GLM installed successfully: $glmHeader"
 
       - name: Configure CMake
         shell: pwsh
