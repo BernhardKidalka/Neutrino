@@ -38,12 +38,22 @@ jobs:
           sudo apt-get update
           sudo apt-get install -y --no-install-recommends \
             gcc-15 g++-15 build-essential cmake pkg-config curl xz-utils ninja-build \
-            libvulkan-dev \
+            libvulkan-dev libglm-dev \
             libglfw3-dev \
             libxkbcommon-dev libwayland-dev libegl1-mesa-dev \
             libwayland-cursor0 \
             libx11-dev libxrandr-dev libxi-dev libxinerama-dev libxcursor-dev \
             libasound2-dev
+
+      - name: Verify GLM headers
+        shell: bash
+        run: |
+          set -euo pipefail
+          if [ ! -f /usr/include/glm/glm.hpp ]; then
+            echo "GLM headers were not installed at /usr/include/glm/glm.hpp" >&2
+            exit 1
+          fi
+          echo "Found GLM headers at /usr/include/glm"
 
       - name: Validate compiler version
         shell: bash
@@ -61,9 +71,9 @@ jobs:
         run: |
           set -euo pipefail
 
-          # Lunarg SDK tarballs sometimes use .0 suffix for 1.4.357;
-          # try both accepted forms to avoid brittle CI breakage.
-          versions=( "1.4.357.0" "1.4.357" )
+          # Lunarg SDK tarballs sometimes use a .0 suffix;
+          # try both forms to avoid brittle CI breakage.
+          versions=( "${VULKAN_SDK_VERSION}.0" "${VULKAN_SDK_VERSION}" )
 
           sdk_root=""
           for ver in "${versions[@]}"; do
